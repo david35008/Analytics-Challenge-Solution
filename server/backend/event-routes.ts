@@ -29,8 +29,16 @@ interface Filter {
   offset: number;
 }
 
+interface FilteredBySession {
+  date: string;
+  count: number;
+  session_id: string;
+}
+
+type FilteredByDate = Omit<FilteredBySession, "date"> & { date: string };
+
 function convertDateToString(date: number) {
-  let today = new Date(date);
+  const today = new Date(date);
   const dd = String(today.getDate()).padStart(2, "0");
   const mm = String(today.getMonth() + 1).padStart(2, "0");
   const yyyy = today.getFullYear();
@@ -46,7 +54,46 @@ router.get('/all', (req: Request, res: Response) => {
 
 
 router.get('/by-days/:offset', (req: Request, res: Response) => {
-  res.send('/by-days/:offset')
+  const offset: number = +req.params.offset;
+  const allEvents: Event[] = getAllEvents();
+  const initialDate: number = new Date().valueOf() - convertDaysToMili(offset - 1);
+  const day: number = new Date(initialDate).getDate();
+  const month: number = new Date(initialDate).getMonth() + 1;
+  const year: number = new Date(initialDate).getFullYear();
+  const formatedDate = new Date(`${year}/${month}/${day}`).valueOf();
+  const endDate = formatedDate - convertDaysToMili(7);
+  const filteredEvents = allEvents.filter((event) =>
+    event.date < formatedDate && event.date >= endDate);
+  filteredEvents.sort((firstEvent: Event, secondEvent: Event) =>
+    firstEvent.date - secondEvent.date);
+  const filteredAndDateFixed: Omit<FilteredBySession, "count">[] = filteredEvents.map((event) => {
+    return { session_id: event.session_id, date: convertDateToString(event.date) };
+  });
+  const filteredAndGrouped: FilteredByDate[] = [];
+  for (const eventToCheck of filteredAndDateFixed) {
+    const indexChecker = filteredAndGrouped.findIndex(
+      (event: FilteredByDate) => event.date === eventToCheck.date
+    );
+    if (indexChecker === -1) {
+      filteredAndGrouped.push({ ...eventToCheck, count: 1 });
+    } else {
+      filteredAndGrouped[indexChecker].count++;
+    }
+  }
+  const filteredAndGroupedBySessionId: FilteredBySession[] = [];
+  for (const eventToCheck of filteredAndGrouped) {
+    const indexChecker = filteredAndGroupedBySessionId.findIndex(
+      (event: FilteredBySession) => event.session_id === eventToCheck.session_id
+    );
+
+    if (indexChecker === -1) {
+      filteredAndGroupedBySessionId.push(eventToCheck);
+    }
+  }
+  const filteredByDays = filteredAndGrouped.map((event: FilteredBySession) => {
+    return { date: event.date, count: event.count };
+  })
+  res.json(filteredByDays);
 });
 
 router.get('/by-hours/:offset', (req: Request, res: Response) => {
