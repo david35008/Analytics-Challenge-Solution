@@ -110,10 +110,12 @@ export const seedDatabase = () => {
 
 //--------------events-----------//
 
-
 export const getAllEvents = () => db.get(EVENT_TABLE).value();
 
 
+export const createNewEvent = (event: Event) => {
+  db.get(EVENT_TABLE).push(event).write();
+};
 
 //-----------------------------------------//
 export const getAllUsers = () => db.get(USER_TABLE).value();

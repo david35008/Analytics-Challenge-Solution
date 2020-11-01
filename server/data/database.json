@@ -5099,6 +5099,23 @@
         "accuracy": 1854
       },
       "url": "http://localhost3000/login"
+    },
+    {
+      "_id": "Pnq5MmIZ6Z_",
+      "session_id": "ebd9da74-3965-43c8-932f-a47b6bffd380",
+      "name": "signup",
+      "distinct_user_id": "eqR0ppLYH",
+      "date": 1601179200001,
+      "os": "windows",
+      "browser": "firefox",
+      "geolocation": {
+        "location": {
+          "lat": 20,
+          "lng": 108
+        },
+        "accuracy": 868
+      },
+      "url": "http://localhost3000/signup"
     }
   ]
 }
