@@ -44,7 +44,16 @@ router.get('/by-hours/:offset', (req: Request, res: Response) => {
 });
 
 router.get('/all-filtered', (req: Request, res: Response) => {
-  res.send('/all-filtered')
+  const filters: Filter = req.query;
+  const allEvents: any[] = getAllEvents();
+  const regexFilter: RegExp = new RegExp(filters.search, "i");
+  const filteredEvents = allEvents.filter((event) =>
+    Object.keys(event).reduce((filter: boolean, key) => {
+      return filter || regexFilter.test((event[key]).toString());
+    }, false)
+  ).filter((event: Event) => event.browser === filters.browser).slice(0, filters.offset);
+
+  res.json({ events: filteredEvents });
 });
 
 router.get('/today', (req: Request, res: Response) => {
@@ -65,9 +74,9 @@ router.get('/:eventId', (req: Request, res: Response) => {
 });
 
 router.post('/', (req: Request, res: Response) => {
-    const event: Event = req.body;
-    createNewEvent(event);
-    res.sendStatus(200)
+  const event: Event = req.body;
+  createNewEvent(event);
+  res.sendStatus(200)
 });
 
 router.get('/chart/os/:time', (req: Request, res: Response) => {
