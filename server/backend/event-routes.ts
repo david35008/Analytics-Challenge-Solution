@@ -47,22 +47,28 @@ router.get('/all-filtered', (req: Request, res: Response) => {
   const filters: Filter = req.query;
   const allEvents: any[] = getAllEvents();
   const regexFilter: RegExp = new RegExp(filters.search, "i");
-  let filteredEvents = allEvents.filter((event) =>
-    Object.keys(event).reduce((filter: boolean, key) => {
+  let filteredEvents = allEvents.filter((event) => {
+    return Object.keys(event).reduce((filter: boolean, key) => {
       return filter || regexFilter.test((event[key]).toString());
     }, false)
-  );
+  });
 
   if (filters.type) {
     filteredEvents = filteredEvents.filter((event: Event) => event.name === filters.type);
-  }
+  };
 
   if (filters.browser) {
     filteredEvents = filteredEvents.filter((event: Event) => event.browser === filters.browser);
-  }
+  };
+
+  if (filters.sorting) {
+    filteredEvents.sort((firstEvent: Event, secondEvent: Event) =>
+      filters.sorting[0] === "+" ? firstEvent.date - secondEvent.date
+        : secondEvent.date - firstEvent.date
+    )
+  };
   
   filteredEvents = filteredEvents.slice(0, filters.offset)
-
   res.json({ events: filteredEvents });
 });
 
