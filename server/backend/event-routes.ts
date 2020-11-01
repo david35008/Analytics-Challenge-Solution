@@ -29,6 +29,16 @@ interface Filter {
   offset: number;
 }
 
+function convertDateToString(date: number) {
+  let today = new Date(date);
+  const dd = String(today.getDate()).padStart(2, "0");
+  const mm = String(today.getMonth() + 1).padStart(2, "0");
+  const yyyy = today.getFullYear();
+  const generatedDate = `${yyyy}/${mm}/${dd}`;
+  return `${generatedDate}`;
+}
+const convertDaysToMili = (days: number) => days * 24 * 60 * 60 * 1000;
+
 router.get('/all', (req: Request, res: Response) => {
   const allEvents: Event[] = getAllEvents();
   res.json(allEvents);
@@ -40,26 +50,60 @@ router.get('/by-days/:offset', (req: Request, res: Response) => {
 });
 
 router.get('/by-hours/:offset', (req: Request, res: Response) => {
-  res.send('/by-hours/:offset')
+  const offset: number = +req.params.offset;
+  const allEvents: Event[] = getAllEvents();
+  const dateToCheck = new Date().valueOf() - convertDaysToMili(offset);
+  const filteredEvents = allEvents.filter((event) =>
+    convertDateToString(event.date) === convertDateToString(dateToCheck)
+  ).map((event) => {
+    return { ...event, date: new Date(event.date).getHours() };
+  });
+  const hoursArr = [];
+  for (let i = 0; i < 24; i++) {
+    if (i < 10) {
+      hoursArr.push({ hour: `0${i}:00`, count: 0 });
+    } else {
+      hoursArr.push({ hour: `${i}:00`, count: 0 });
+    }
+  }
+  const eventsForCheck: any[] = [];
+  for (const eventToCheck of filteredEvents) {
+    const checker = eventsForCheck.findIndex((event) =>
+      eventToCheck.session_id === event.session_id && eventToCheck.date === event.date
+    );
+    if (checker === -1) {
+      hoursArr[eventToCheck.date].count++;
+    } else {
+      eventsForCheck.push(eventToCheck);
+    }
+  }
+  res.json(hoursArr);
 });
 
 router.get('/all-filtered', (req: Request, res: Response) => {
   const filters: Filter = req.query;
   const allEvents: any[] = getAllEvents();
-  const regexFilter: RegExp = new RegExp(filters.search, "i");
-  let filteredEvents = allEvents.filter((event) => {
-    return Object.keys(event).reduce((filter: boolean, key) => {
-      return filter || regexFilter.test((event[key]).toString());
-    }, false)
-  });
+  let filteredEvents = allEvents;
+  if (filters.search) {
+    const reg: RegExp = new RegExp(filters.search, "i");
+    filteredEvents = allEvents.filter((event) => {
+      let checker = false;
+      for (const key in event) {
+        if (reg.test(event[key])) {
+          checker = true;
+        }
+      }
+      return checker;
+    });
+  }
 
   if (filters.type) {
     filteredEvents = filteredEvents.filter((event: Event) => event.name === filters.type);
-  };
+  }
 
   if (filters.browser) {
     filteredEvents = filteredEvents.filter((event: Event) => event.browser === filters.browser);
-  };
+  }
 
   if (filters.sorting) {
     filteredEvents.sort((firstEvent: Event, secondEvent: Event) =>
@@ -67,7 +111,7 @@ router.get('/all-filtered', (req: Request, res: Response) => {
         : secondEvent.date - firstEvent.date
     )
   };
-  
+
   filteredEvents = filteredEvents.slice(0, filters.offset)
   res.json({ events: filteredEvents });
 });
