@@ -69,7 +69,7 @@ import {
   isCommentNotification,
 } from "../../client/src/utils/transactionUtils";
 import { DbSchema } from "../../client/src/models/db-schema";
-
+import { OneHour, OneDay, OneWeek } from './timeFrames';
 
 export type TDatabase = {
   users: User[];
@@ -108,6 +108,14 @@ export const seedDatabase = () => {
   return;
 };
 
+//--------------events-----------//
+
+
+export const getAllEvents = () => db.get(EVENT_TABLE).value();
+
+
+
+//-----------------------------------------//
 export const getAllUsers = () => db.get(USER_TABLE).value();
 
 export const getAllPublicTransactions = () =>
@@ -862,6 +870,5 @@ export const getTransactionsBy = (key: string, value: string) =>
 
 /* istanbul ignore next */
 export const getTransactionsByUserId = (userId: string) => getTransactionsBy("receiverId", userId);
-
 
 export default db;

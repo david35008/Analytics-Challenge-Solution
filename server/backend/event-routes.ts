@@ -5,6 +5,7 @@ import { Request, Response } from "express";
 
 // some useful database functions in here:
 import {
+  getAllEvents
 } from "./database";
 import { Event, weeklyRetentionObject } from "../../client/src/models/event";
 import { ensureAuthenticated, validateMiddleware } from "./helpers";
@@ -28,13 +29,10 @@ interface Filter {
 }
 
 router.get('/all', (req: Request, res: Response) => {
-  res.send('/all')
-    
+  const allEvents: Event[] = getAllEvents();
+  res.json(allEvents);
 });
 
-router.get('/all-filtered', (req: Request, res: Response) => {
-  res.send('/all-filtered')
-});
 
 router.get('/by-days/:offset', (req: Request, res: Response) => {
   res.send('/by-days/:offset')
@@ -42,6 +40,10 @@ router.get('/by-days/:offset', (req: Request, res: Response) => {
 
 router.get('/by-hours/:offset', (req: Request, res: Response) => {
   res.send('/by-hours/:offset')
+});
+
+router.get('/all-filtered', (req: Request, res: Response) => {
+  res.send('/all-filtered')
 });
 
 router.get('/today', (req: Request, res: Response) => {
@@ -53,10 +55,11 @@ router.get('/week', (req: Request, res: Response) => {
 });
 
 router.get('/retention', (req: Request, res: Response) => {
-  const {dayZero} = req.query
+  const { dayZero } = req.query
   res.send('/retention')
 });
-router.get('/:eventId',(req : Request, res : Response) => {
+
+router.get('/:eventId', (req: Request, res: Response) => {
   res.send('/:eventId')
 });
 
@@ -64,20 +67,19 @@ router.post('/', (req: Request, res: Response) => {
   res.send('/')
 });
 
-router.get('/chart/os/:time',(req: Request, res: Response) => {
+router.get('/chart/os/:time', (req: Request, res: Response) => {
   res.send('/chart/os/:time')
 })
 
-  
-router.get('/chart/pageview/:time',(req: Request, res: Response) => {
+router.get('/chart/pageview/:time', (req: Request, res: Response) => {
   res.send('/chart/pageview/:time')
 })
 
-router.get('/chart/timeonurl/:time',(req: Request, res: Response) => {
+router.get('/chart/timeonurl/:time', (req: Request, res: Response) => {
   res.send('/chart/timeonurl/:time')
 })
 
-router.get('/chart/geolocation/:time',(req: Request, res: Response) => {
+router.get('/chart/geolocation/:time', (req: Request, res: Response) => {
   res.send('/chart/geolocation/:time')
 })
 

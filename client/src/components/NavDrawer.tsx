@@ -20,6 +20,7 @@ import AccountBalanceIcon from "@material-ui/icons/AccountBalance";
 import { Grid, Avatar, Typography } from "@material-ui/core";
 import { formatAmount } from "../utils/transactionUtils";
 import { AuthMachineContext, AuthMachineEvents } from "../machines/authMachine";
+import AssessmentIcon from '@material-ui/icons/Assessment';
 
 const drawerWidth = 240;
 
@@ -27,61 +28,75 @@ export const mainListItems = (
   toggleDrawer: ((event: React.MouseEvent<HTMLAnchorElement, MouseEvent>) => void) | undefined,
   showTemporaryDrawer: Boolean
 ) => (
-  <div>
-    <ListItem
-      button
-      // @ts-ignore
-      onClick={() => showTemporaryDrawer && toggleDrawer()}
-      component={RouterLink}
-      to="/"
-      data-test="sidenav-home"
-    >
-      <ListItemIcon>
-        <HomeIcon />
-      </ListItemIcon>
-      <ListItemText primary="Home" />
-    </ListItem>
-    <ListItem
-      button
-      // @ts-ignore
-      onClick={() => showTemporaryDrawer && toggleDrawer()}
-      component={RouterLink}
-      to="/user/settings"
-      data-test="sidenav-user-settings"
-    >
-      <ListItemIcon>
-        <PersonIcon />
-      </ListItemIcon>
-      <ListItemText primary="My Account" />
-    </ListItem>
-    <ListItem
-      button
-      // @ts-ignore
-      onClick={() => showTemporaryDrawer && toggleDrawer()}
-      component={RouterLink}
-      to="/bankaccounts"
-      data-test="sidenav-bankaccounts"
-    >
-      <ListItemIcon>
-        <AccountBalanceIcon />
-      </ListItemIcon>
-      <ListItemText primary="Bank Accounts" />
-    </ListItem>
-    <ListItem
-      button
-      // @ts-ignore
-      onClick={() => showTemporaryDrawer && toggleDrawer()}
-      component={RouterLink}
-      to="/notifications"
-      data-test="sidenav-notifications"
-    >
-      <ListItemIcon>
-        <NotificationsIcon />
-      </ListItemIcon>
-      <ListItemText primary="Notifications" />
-    </ListItem>
-  </div>
-);
+    <div>
+      <ListItem
+        button
+        // @ts-ignore
+        onClick={() => showTemporaryDrawer && toggleDrawer()}
+        component={RouterLink}
+        to="/"
+        data-test="sidenav-home"
+      >
+        <ListItemIcon>
+          <HomeIcon />
+        </ListItemIcon>
+        <ListItemText primary="Home" />
+      </ListItem>
+      <ListItem
+        button
+        // @ts-ignore
+        onClick={() => showTemporaryDrawer && toggleDrawer()}
+        component={RouterLink}
+        to="/user/settings"
+        data-test="sidenav-user-settings"
+      >
+        <ListItemIcon>
+          <PersonIcon />
+        </ListItemIcon>
+        <ListItemText primary="My Account" />
+      </ListItem>
+      <ListItem
+        button
+        // @ts-ignore
+        onClick={() => showTemporaryDrawer && toggleDrawer()}
+        component={RouterLink}
+        to="/bankaccounts"
+        data-test="sidenav-bankaccounts"
+      >
+        <ListItemIcon>
+          <AccountBalanceIcon />
+        </ListItemIcon>
+        <ListItemText primary="Bank Accounts" />
+      </ListItem>
+      <ListItem
+        button
+        // @ts-ignore
+        onClick={() => showTemporaryDrawer && toggleDrawer()}
+        component={RouterLink}
+        to="/notifications"
+        data-test="sidenav-notifications"
+      >
+        <ListItemIcon>
+          <NotificationsIcon />
+        </ListItemIcon>
+        <ListItemText primary="Notifications" />
+      </ListItem>
+
+      <ListItem
+        button
+        // @ts-ignore
+        onClick={() => showTemporaryDrawer && toggleDrawer()}
+        component={RouterLink}
+        to="/admin"
+        data-test="sidenav-user-settings"
+      >
+        <ListItemIcon>
+          <AssessmentIcon />
+        </ListItemIcon>
+        <ListItemText primary="Dashboard" />
+      </ListItem>
+    </div>
+  );
 
 export const secondaryListItems = (signOutPending: Function) => (
   <div>
