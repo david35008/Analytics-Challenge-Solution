@@ -91,7 +91,7 @@ The entry point response format is
 ---
 ## /by-days/:offset
 
-reutns a count of __unique sessions__ (events with different `session_id`), grouped by days, __for one week.__
+reutns a count of __unique sessions for the relevant day__ (events with different `session_id`), grouped by days, __for one week.__
 
 __`offset`-__ number of days to go back from today. If `offset` is 0 the return result should be week ago strting from today.
 
@@ -150,7 +150,7 @@ __current date-__ 30/10/2020, __http request-__ `http://localhost:3000/events/by
 
 ## /by-hours/:offset
 
-reutns a count of __unique sessions__ (events with different `session_id`), grouped by hour, __for one day.__
+reutns a count of __unique sessions for the relevant hour__ (events with different `session_id`), grouped by hour, __for one day.__
 
 __`offset`-__ number of days to go back from today. If `offset` is 0 the return result should todays sessions.
 

@@ -5,27 +5,26 @@ import db from "../database";
 import { Event as event,os } from "../../../client/src/models/event";
 import {OneHour, OneDay, OneWeek} from '../timeFrames'
 
-
- const isEvent = (event : any ): event is event => {
-   if(
-    '_id' in event&&
-    'session_id' in event&&
-    'name' in event&&
-    'url' in event&&
-    'distinct_user_id' in event&&
-    'date' in event&&
-    'os' in event&&
-    'browser' in event&&
-    'geolocation' in event
-    ){
-      return true
-    }else{
-      return false
-    }
+const isEvent = (event : any ): event is event => {
+  if(
+   '_id' in event&&
+   'session_id' in event&&
+   'name' in event&&
+   'url' in event&&
+   'distinct_user_id' in event&&
+   'date' in event&&
+   'os' in event&&
+   'browser' in event&&
+   'geolocation' in event
+   ){
+     return true
+   }else{
+     return false
+   }
 }
 
 const isEventArray = (events: any[]): events is event[] => {
-  return events.every(eve=>isEvent(eve))
+ return events.every(eve=>isEvent(eve))
 }
 
 describe("main test", () => {
@@ -82,15 +81,18 @@ describe("main test", () => {
       `/events/retention?dayZero=${dayZero}`
     ).expect(200);
     
-    console.log(retentionData)
+    // console.log(retentionData)
 
     expect(retentionData.length).toBe(6);
-    
-    expect(retentionData[0].weeklyRetention).toEqual([ 100, 40, 60, 90, 80, 0 ]);
+
+    expect(retentionData[0].newUsers).toBe(10);
+    expect(retentionData[0].weeklyRetention).toEqual([ 100, 30, 60, 90, 80, 0 ]);
+    expect(retentionData[1].newUsers).toBe(10);
     expect(retentionData[1].weeklyRetention).toEqual([ 100, 90, 60,100,0 ]);
+    expect(retentionData[2].newUsers).toBe(11);
     expect(retentionData[2].weeklyRetention).toEqual([ 100, 100, 82, 9 ]);
     expect(retentionData[4].newUsers).toBe(9);
-
+    expect(retentionData[4].weeklyRetention).toEqual([ 100, 44 ]);
 
   });
   it("can filter events by browser", async () => {

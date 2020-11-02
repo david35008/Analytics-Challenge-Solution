@@ -49,7 +49,9 @@ import {
   NotificationResponseItem,
   TransactionQueryPayload,
   DefaultPrivacyLevel,
-  Event
+  Event,
+  weeklyRetentionObject,
+  eventName
 } from "../../client/src/models";
 import Fuse from "fuse.js";
 import {
@@ -66,10 +68,10 @@ import {
   isRequestTransaction,
   formatFullName,
   isLikeNotification,
-  isCommentNotification,
+  isCommentNotification
 } from "../../client/src/utils/transactionUtils";
 import { DbSchema } from "../../client/src/models/db-schema";
-
+import { OneHour, OneDay, OneWeek } from './timeFrames';
 
 export type TDatabase = {
   users: User[];
@@ -108,6 +110,16 @@ export const seedDatabase = () => {
   return;
 };
 
+//--------------events-----------//
+
+export const getAllEvents = () => db.get(EVENT_TABLE).value();
+
+export const createNewEvent = (event: Event) => {
+  db.get(EVENT_TABLE).push(event).write();
+};
+export const dayZero: number = new Date('10/01/2020').getTime()
+
+//-----------------------------------------//
 export const getAllUsers = () => db.get(USER_TABLE).value();
 
 export const getAllPublicTransactions = () =>
@@ -862,6 +874,5 @@ export const getTransactionsBy = (key: string, value: string) =>
 
 /* istanbul ignore next */
 export const getTransactionsByUserId = (userId: string) => getTransactionsBy("receiverId", userId);
-
 
 export default db;

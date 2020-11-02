@@ -62,7 +62,7 @@ export const commentsPerUser = +process.env.SEED_COMMENTS_PER_USER!;
 export const notificationsPerUser = +process.env.SEED_NOTIFICATIONS_PER_USER!;
 export const bankTransfersPerUser = +process.env.SEED_BANK_TRANSFERS_PER_USER!;
 export const defaultPassword = process.env.SEED_DEFAULT_USER_PASSWORD!;
-export const dayZero = process.env.SEED_DAY_ZERO;
+export const dayZero = +process.env.SEED_DAY_ZERO!;
 
 export const paymentVariations = 2;
 export const requestVariations = 3;

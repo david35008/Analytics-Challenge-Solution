@@ -68,9 +68,9 @@ const App: React.FC = () => {
               }}
             />
           </Route>
-          {/* <Route exact path="/admin">
+          <Route exact path="/admin">
             <DashBoard />
-          </Route> */}
+          </Route>
         </Switch>
       )}
       <AlertBar snackbarService={snackbarService} />
