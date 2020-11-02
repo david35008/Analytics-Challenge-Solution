@@ -49,7 +49,9 @@ import {
   NotificationResponseItem,
   TransactionQueryPayload,
   DefaultPrivacyLevel,
-  Event
+  Event,
+  weeklyRetentionObject,
+  eventName
 } from "../../client/src/models";
 import Fuse from "fuse.js";
 import {
@@ -66,7 +68,7 @@ import {
   isRequestTransaction,
   formatFullName,
   isLikeNotification,
-  isCommentNotification,
+  isCommentNotification
 } from "../../client/src/utils/transactionUtils";
 import { DbSchema } from "../../client/src/models/db-schema";
 import { OneHour, OneDay, OneWeek } from './timeFrames';
@@ -116,6 +118,85 @@ export const getAllEvents = () => db.get(EVENT_TABLE).value();
 export const createNewEvent = (event: Event) => {
   db.get(EVENT_TABLE).push(event).write();
 };
+export const dayZero: number = new Date('10/01/2020').getTime()
+export const getRetentionCohort = (dayRetentaa: number): weeklyRetentionObject[] => {
+  console.log('------------------------------------');
+  // let dayRetent = dayRetentaa - OneWeek + OneDay + OneDay + OneDay
+  let dayRetent = dayZero + OneWeek - OneDay
+
+  console.log('dayRetent', dayRetentaa);
+  // console.log('++++++++++++++++++++++++++++++++++++++++');
+  // console.log('dayRetent', dayRetent);
+  console.log('!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!1');
+  console.log('dayZero', dayZero);
+  console.log('------------------------------------');
+
+  const signups: Event[] = db.get('events').filter(
+    (event: Event) => event.name === "signup").orderBy('date').value()
+  const logins: Event[] = db.get('events').filter({ ['name']: 'login' })
+    .orderBy('date').value()
+
+  const weekEnds: number[] = []
+  // stores the end time of every week since dayZero
+  for (let day = dayRetent; day <= Date.now() + OneWeek; day += OneWeek) {
+    weekEnds.push(day + OneWeek)
+  }
+
+
+  const weeklyRetention: weeklyRetentionObject[] = weekEnds.map((weekEnd, weekNumber) => {//first isolate the new Users the week
+    const firstSignupNextWeek = signups.findIndex(signup => signup.date >= weekEnd)
+    let weeksNewSignups = signups.splice(0, firstSignupNextWeek >= 0 ? firstSignupNextWeek : 0)
+
+    //second isolate the logins of users who started this week
+    const loginsByNewUsers = logins
+      .filter(({ distinct_user_id: loginId }) => {
+        return weeksNewSignups.some(({ distinct_user_id: signupId }) => loginId === signupId)
+      })
+
+    const weeklyRetention: number[] = []
+
+    //third for every following week we must find how many of the new Users came back 
+    for (let i = weekNumber; i < weekEnds.length - 1; i++) {
+      const returnedUsers: string[] = []
+
+      const firstLoginNextWeek: number = loginsByNewUsers.findIndex(login => login.date >= weekEnds[i])
+      let weeksLogins = loginsByNewUsers.splice(0, firstLoginNextWeek >= 0 ? firstLoginNextWeek : 0)
+      weeksLogins.forEach(({ distinct_user_id }) => {
+        if (!returnedUsers.includes(distinct_user_id)) {
+          returnedUsers.push(distinct_user_id)
+        }
+      })
+
+      weeklyRetention.push(returnedUsers.length)
+    }
+
+    const newUsers = (weekNumber !== weekEnds.length - 1 ? weeksNewSignups : signups).length
+    const weeklyRetentionPercent = [100].concat(newUsers
+      ? weeklyRetention.map(returnedUsers => Math.round(100 * returnedUsers / newUsers))
+      : weeklyRetention
+    )
+
+    return {
+      registrationWeek: weekNumber,
+      start: new Date(dayRetent + weekNumber * OneWeek).toDateString().slice(4),
+      end: (new Date(weekEnds[weekNumber] - 1)).toDateString().slice(4),
+      newUsers: newUsers,
+      weeklyRetention: weeklyRetentionPercent
+    }
+  })
+
+  return weeklyRetention
+}
+
+export const getEventByType = (name: eventName, array?: Event[]) => {
+  if (array) {
+    return array.filter((event: Event) => {
+      // console.log(event.name , name);
+      return event.name === name
+    });
+  }
+  return db.get(EVENT_TABLE).value().filter((event: Event) => event.name === name)
+}
 
 //-----------------------------------------//
 export const getAllUsers = () => db.get(USER_TABLE).value();

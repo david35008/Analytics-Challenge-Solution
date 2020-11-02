@@ -6,7 +6,9 @@ import { Request, Response } from "express";
 // some useful database functions in here:
 import {
   getAllEvents,
-  createNewEvent
+  createNewEvent,
+  getRetentionCohort,
+  getEventByType
 } from "./database";
 import { Event, weeklyRetentionObject } from "../../client/src/models/event";
 import { ensureAuthenticated, validateMiddleware } from "./helpers";
@@ -171,9 +173,112 @@ router.get('/week', (req: Request, res: Response) => {
   res.send('/week')
 });
 
+function getStartOfDay(dateNow:number): number{
+  let year = new Date(dateNow).getFullYear()
+  let day = new Date(dateNow).getDate()
+  let month = new Date(dateNow).getMonth() +1;
+  const startOfDay = new Date(`${year}/${month}/${day}`);
+  return startOfDay.getTime();
+}
+
+
+function getDateInFormat(dateNow:number): string{
+  let year = new Date(dateNow).getFullYear()
+  let day = new Date(dateNow).getDate()
+  let month = new Date(dateNow).getMonth() +1;
+  return `${year}/${month}/${day}`;
+}
+
+function getWeekFromNow(dateNow:number): number {
+  const week = 1000*60*60*24*7;
+  return dateNow + week;
+}
+
+const toStartOfTheDay = (date: number): number => {
+  return new Date(new Date(date).toDateString()).valueOf();
+};
+
+
 router.get('/retention', (req: Request, res: Response) => {
-  const { dayZero } = req.query
-  res.send('/retention')
+  const dayZero: number = +req.query.dayZero;
+  const events: Event[] = getAllEvents();
+
+  let startingDateInNumber: number = toStartOfTheDay(dayZero);
+  const getStringDates = (startingDateInNumber: number): string[] => {
+    return [
+      convertDateToString(startingDateInNumber),
+      convertDateToString(startingDateInNumber + convertDaysToMili(7)),
+    ];
+  };
+  const getSingedUsers = (startingDateInNumber: number): string[] => {
+    return events
+      .filter(
+        (event) =>
+          startingDateInNumber + convertDaysToMili(7) > event.date &&
+          event.date > startingDateInNumber &&
+          event.name === "signup"
+      )
+      .map((user: Event): string => user.distinct_user_id);
+  };
+  const getOneWeekRetentions = (
+    startDate: number,
+    users: string[],
+    weekNumber: number
+  ): weeklyRetentionObject => {
+    let weeklyRetentionObject: Omit<weeklyRetentionObject, "weeklyRetention"> = {
+      registrationWeek: weekNumber,
+      start: getStringDates(startDate)[0],
+      end: getStringDates(startDate)[1],
+      newUsers: getSingedUsers(startDate).length,
+    };
+
+    const weeklyRetention = [100];
+    let currentDateCheck: number = startDate + convertDaysToMili(7);
+    while (true) {
+      if (currentDateCheck > toStartOfTheDay(new Date().valueOf()) + convertDaysToMili(1)) {
+        break;
+      }
+      let countUserRetention = 0;
+      const usersEvents: string[] = events
+        .filter(
+          (event) =>
+            currentDateCheck + convertDaysToMili(7) > event.date &&
+            event.date >= currentDateCheck &&
+            event.name === "login"
+        )
+        .map((user: Event): string => user.distinct_user_id);
+      const setUsersArr: string[] = Array.from(new Set(usersEvents));
+      for (let user of setUsersArr) {
+        if (users.findIndex((userToCheck) => userToCheck === user) !== -1) {
+          countUserRetention++;
+        }
+      }
+
+      weeklyRetention.push(Math.round((countUserRetention * 100) / users.length));
+
+      currentDateCheck += convertDaysToMili(7);
+    }
+    return { ...weeklyRetentionObject, weeklyRetention };
+  };
+  const retentionsData = [];
+  let retentionsCounter = 0;
+  let numberStart = startingDateInNumber;
+
+  while (numberStart < new Date().valueOf()) {
+    if (getStringDates(numberStart)[0].slice(-5) === "10/25") {
+      numberStart += 3600 * 1000;
+    }
+    retentionsCounter++;
+    retentionsData.push(
+      getOneWeekRetentions(numberStart, getSingedUsers(numberStart), retentionsCounter)
+    );
+    numberStart += convertDaysToMili(7);
+    if (getStringDates(numberStart)[1].slice(-5) === "10/25") {
+      numberStart += 3600 * 1000;
+    }
+  }
+
+  res.json(retentionsData);
 });
 
 router.get('/:eventId', (req: Request, res: Response) => {
