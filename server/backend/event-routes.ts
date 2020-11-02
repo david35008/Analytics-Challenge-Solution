@@ -6,9 +6,7 @@ import { Request, Response } from "express";
 // some useful database functions in here:
 import {
   getAllEvents,
-  createNewEvent,
-  getRetentionCohort,
-  getEventByType
+  createNewEvent
 } from "./database";
 import { Event, weeklyRetentionObject } from "../../client/src/models/event";
 import { ensureAuthenticated, validateMiddleware } from "./helpers";
@@ -53,6 +51,10 @@ router.get('/all', (req: Request, res: Response) => {
   const allEvents: Event[] = getAllEvents();
   res.json(allEvents);
 });
+
+const toStartOfTheDay = (date: number): number => {
+  return new Date(new Date(date).toDateString()).valueOf();
+};
 
 
 router.get('/by-days/:offset', (req: Request, res: Response) => {
@@ -173,32 +175,6 @@ router.get('/week', (req: Request, res: Response) => {
   res.send('/week')
 });
 
-function getStartOfDay(dateNow:number): number{
-  let year = new Date(dateNow).getFullYear()
-  let day = new Date(dateNow).getDate()
-  let month = new Date(dateNow).getMonth() +1;
-  const startOfDay = new Date(`${year}/${month}/${day}`);
-  return startOfDay.getTime();
-}
-
-
-function getDateInFormat(dateNow:number): string{
-  let year = new Date(dateNow).getFullYear()
-  let day = new Date(dateNow).getDate()
-  let month = new Date(dateNow).getMonth() +1;
-  return `${year}/${month}/${day}`;
-}
-
-function getWeekFromNow(dateNow:number): number {
-  const week = 1000*60*60*24*7;
-  return dateNow + week;
-}
-
-const toStartOfTheDay = (date: number): number => {
-  return new Date(new Date(date).toDateString()).valueOf();
-};
-
-
 router.get('/retention', (req: Request, res: Response) => {
   const dayZero: number = +req.query.dayZero;
   const events: Event[] = getAllEvents();
@@ -306,6 +282,5 @@ router.get('/chart/timeonurl/:time', (req: Request, res: Response) => {
 router.get('/chart/geolocation/:time', (req: Request, res: Response) => {
   res.send('/chart/geolocation/:time')
 })
-
 
 export default router;
