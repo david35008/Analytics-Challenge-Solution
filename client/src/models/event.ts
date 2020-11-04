@@ -1,3 +1,5 @@
+import { ReactNode } from 'react';
+
 export interface Event {
   _id: string;
   session_id: string;
@@ -8,6 +10,15 @@ export interface Event {
   os: os;
   browser: browser;
   geolocation: GeoLocation;
+}
+export interface AllFiltered {
+  events: Event[];
+  more: boolean;
+}
+
+export interface CollapsibleTableProps {
+  chartsData: AllFiltered;
+  setOffset: Function;
 }
 
 export interface weeklyRetentionObject {
@@ -69,6 +80,10 @@ export interface ActiveShapeInter {
   payload: { name: string }
   percent: number
   value: number
+}
+
+export interface Props {
+  children: ReactNode;
 }
 
 export type CustomizedTablesType = number[] | undefined;

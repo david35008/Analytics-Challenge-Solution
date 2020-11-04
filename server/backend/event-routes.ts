@@ -165,14 +165,8 @@ router.get('/all-filtered', (req: Request, res: Response) => {
   let filteredEvents: Event[] = allEvents;
   if (filters.search) {
     const reg: RegExp = new RegExp(filters.search, "i");
-    filteredEvents = allEvents.filter((event: any): boolean => {
-      let checker: boolean = false;
-      for (const key in event) {
-        if (reg.test(event.key)) {
-          checker = true;
-        }
-      }
-      return checker;
+    filteredEvents = filteredEvents.filter((event: Event): boolean => {
+      return Object.values(event).some((value) => reg.test(value.toString()));
     });
   }
 
