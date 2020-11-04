@@ -19,7 +19,7 @@ import Select from '@material-ui/core/Select';
 import InputLabel from '@material-ui/core/InputLabel';
 import MenuItem from '@material-ui/core/MenuItem';
 import FormControl from '@material-ui/core/FormControl';
-import { Event, CollapsibleTableProps } from '../../models/event';
+import { Event, CollapsibleTableProps, AllFiltered } from '../../models/event';
 
 const useRowStyles = makeStyles(() => ({
     root: {
@@ -147,7 +147,7 @@ const useStyles = makeStyles((theme: Theme) => ({
 
 const LogOfAllEvents: React.FC = () => {
     const classes = useStyles();
-    const [chartsData, setChartsData] = useState<Event[] | undefined>()
+    const [chartsData, setChartsData] = useState<AllFiltered | undefined>()
     const [offset, setOffset] = useState<string>('10');
     const [type, setType] = useState<string>('');
     const [search, setSearch] = useState<string>('');
@@ -155,7 +155,7 @@ const LogOfAllEvents: React.FC = () => {
     const [browser, setBrowser] = useState<string>('');
 
     const fetchChartsData = async (): Promise<void> => {
-        const { data }: { data: Event[] | undefined } = await httpClient.get(`
+        const { data }: { data: AllFiltered | undefined } = await httpClient.get(`
         http://localhost:3001/events/all-filtered?offset=${offset}&type=${type}&search=${search}&sorting=${sorting}&browser=${browser}`)
         setChartsData(data)
     }
@@ -222,7 +222,9 @@ const LogOfAllEvents: React.FC = () => {
                         </Select>
                     </FormControl>
                 </div>
-                <CollapsibleTable chartsData={chartsData} setOffset={setOffset} />
+                {chartsData &&
+                    <CollapsibleTable chartsData={chartsData} setOffset={setOffset} />
+                }
             </div>
         </div>
     </>);
