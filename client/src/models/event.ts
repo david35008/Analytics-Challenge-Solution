@@ -11,11 +11,11 @@ export interface Event {
 }
 
 export interface weeklyRetentionObject {
-  registrationWeek:number;
-  newUsers:number;
-  weeklyRetention:number[];
-  start:string;
-  end:string
+  registrationWeek: number;
+  newUsers: number;
+  weeklyRetention: number[];
+  start: string;
+  end: string
 }
 
 export type eventName = "login" | "signup" | "admin" | "/";
@@ -36,3 +36,39 @@ export interface RetentionCohort {
   search: string;
   offset: number;
 }
+
+export interface SessionsDaysInter {
+  date: string;
+  count: number;
+}
+
+export interface SessionsHoursInter {
+  hour: string;
+  count: number;
+}
+
+export interface ViewsPerPageInter {
+  name: string;
+  views: number;
+}
+
+export interface PieOsInter {
+  name: string;
+  value: number;
+}
+
+export interface ActiveShapeInter {
+  cx: number
+  cy: number
+  midAngle: number
+  innerRadius: number
+  outerRadius: number
+  startAngle: number
+  endAngle: number
+  fill: string
+  payload: { name: string }
+  percent: number
+  value: number
+}
+
+export type CustomizedTablesType = number[] | undefined;

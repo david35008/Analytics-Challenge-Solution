@@ -132,7 +132,9 @@ router.get('/by-hours/:offset', (req: Request, res: Response) => {
 });
 
 router.get('/all-filtered', (req: Request, res: Response) => {
+  req.query.offset = Number(req.query.offset)
   const filters: Filter = req.query;
+  console.log(filters)
   const allEvents: any[] = getAllEvents();
   let filteredEvents = allEvents;
   if (filters.search) {
@@ -162,9 +164,12 @@ router.get('/all-filtered', (req: Request, res: Response) => {
         : secondEvent.date - firstEvent.date
     )
   };
-
+  const endArr = filters.offset ? filters.offset < filteredEvents.length ?
+    { events: [...filteredEvents.slice(0, filters.offset)], more: true }
+    : { events: [...filteredEvents.slice(0, filters.offset)], more: false }
+    : { events: [...filteredEvents], more: false }
   filteredEvents = filteredEvents.slice(0, filters.offset)
-  res.json({ events: filteredEvents });
+  res.json(endArr);
 });
 
 router.get('/today', (req: Request, res: Response) => {
@@ -267,12 +272,38 @@ router.post('/', (req: Request, res: Response) => {
   res.sendStatus(200)
 });
 
-router.get('/chart/os/:time', (req: Request, res: Response) => {
-  res.send('/chart/os/:time')
+router.get('/chart/os', (req: Request, res: Response) => {
+  const events: Event[] = getAllEvents()
+  const os: string[] = events.map(x => x.os).filter((id, i, arr) => {
+    return arr.indexOf(id) == i;
+  })
+  const pageViews = os.map(os => {
+    let usage = 0
+    events.forEach(event => {
+      if (event.os === os) {
+        usage++
+      }
+    })
+    return { name: os, value: usage }
+  })
+  res.send(pageViews)
 })
 
-router.get('/chart/pageview/:time', (req: Request, res: Response) => {
-  res.send('/chart/pageview/:time')
+router.get('/chart/pageview', (req: Request, res: Response) => {
+  const events: Event[] = getAllEvents()
+  const pages: string[] = events.map(x => x.url).filter((id, i, arr) => {
+    return arr.indexOf(id) == i;
+  })
+  const pageViews = pages.map(page => {
+    let views = 0
+    events.forEach(event => {
+      if (event.url === page) {
+        views++
+      }
+    })
+    return { name: page.replace('http://localhost3000/', ''), views: views }
+  })
+  res.send(pageViews)
 })
 
 router.get('/chart/timeonurl/:time', (req: Request, res: Response) => {
