@@ -35,26 +35,51 @@ interface FilteredBySession {
   session_id: string;
 }
 
+interface HourCount {
+  hour: string;
+  count: number;
+}
+
+interface FilteredRes {
+  events: Event[];
+  more: boolean;
+}
+
+interface OsUsage {
+  name: string;
+  value: number;
+}
+
+interface PageViews {
+  name: string;
+  views: number;
+}
+
+
 type FilteredByDate = Omit<FilteredBySession, "date"> & { date: string };
+type filteredByDays = Omit<FilteredBySession, "session_id">
+type filteredAndDateFixed = Omit<FilteredBySession, "count">
+
 
 function convertDateToString(date: number) {
-  const today = new Date(date);
-  const dd = String(today.getDate()).padStart(2, "0");
-  const mm = String(today.getMonth() + 1).padStart(2, "0");
-  const yyyy = today.getFullYear();
-  const generatedDate = `${yyyy}/${mm}/${dd}`;
+  const today: Date = new Date(date);
+  const dd: string = String(today.getDate()).padStart(2, "0");
+  const mm: string = String(today.getMonth() + 1).padStart(2, "0");
+  const yyyy: number = today.getFullYear();
+  const generatedDate: string = `${yyyy}/${mm}/${dd}`;
   return `${generatedDate}`;
 }
 const convertDaysToMili = (days: number) => days * 24 * 60 * 60 * 1000;
+
+const toStartOfTheDay = (date: number): number => {
+  return new Date(new Date(date).toDateString()).valueOf();
+};
 
 router.get('/all', (req: Request, res: Response) => {
   const allEvents: Event[] = getAllEvents();
   res.json(allEvents);
 });
 
-const toStartOfTheDay = (date: number): number => {
-  return new Date(new Date(date).toDateString()).valueOf();
-};
 
 
 router.get('/by-days/:offset', (req: Request, res: Response) => {
@@ -64,19 +89,20 @@ router.get('/by-days/:offset', (req: Request, res: Response) => {
   const day: number = new Date(initialDate).getDate();
   const month: number = new Date(initialDate).getMonth() + 1;
   const year: number = new Date(initialDate).getFullYear();
-  const formatedDate = new Date(`${year}/${month}/${day}`).valueOf();
-  const endDate = formatedDate - convertDaysToMili(7);
-  const filteredEvents = allEvents.filter((event) =>
+  const formatedDate: number = new Date(`${year}/${month}/${day}`).valueOf();
+  const endDate: number = formatedDate - convertDaysToMili(7);
+  const filteredEvents: Event[] = allEvents.filter((event: Event): boolean =>
     event.date < formatedDate && event.date >= endDate);
-  filteredEvents.sort((firstEvent: Event, secondEvent: Event) =>
+  filteredEvents.sort((firstEvent: Event, secondEvent: Event): number =>
     firstEvent.date - secondEvent.date);
-  const filteredAndDateFixed: Omit<FilteredBySession, "count">[] = filteredEvents.map((event) => {
-    return { session_id: event.session_id, date: convertDateToString(event.date) };
-  });
+  const filteredAndDateFixed: filteredAndDateFixed[] = filteredEvents.map(
+    (event: Event): filteredAndDateFixed => {
+      return { session_id: event.session_id, date: convertDateToString(event.date) };
+    });
   const filteredAndGrouped: FilteredByDate[] = [];
   for (const eventToCheck of filteredAndDateFixed) {
-    const indexChecker = filteredAndGrouped.findIndex(
-      (event: FilteredByDate) => event.date === eventToCheck.date
+    const indexChecker: number = filteredAndGrouped.findIndex(
+      (event: FilteredByDate): boolean => event.date === eventToCheck.date
     );
     if (indexChecker === -1) {
       filteredAndGrouped.push({ ...eventToCheck, count: 1 });
@@ -87,39 +113,40 @@ router.get('/by-days/:offset', (req: Request, res: Response) => {
   const filteredAndGroupedBySessionId: FilteredBySession[] = [];
   for (const eventToCheck of filteredAndGrouped) {
     const indexChecker = filteredAndGroupedBySessionId.findIndex(
-      (event: FilteredBySession) => event.session_id === eventToCheck.session_id
+      (event: FilteredBySession): boolean => event.session_id === eventToCheck.session_id
     );
 
     if (indexChecker === -1) {
       filteredAndGroupedBySessionId.push(eventToCheck);
     }
   }
-  const filteredByDays = filteredAndGrouped.map((event: FilteredBySession) => {
-    return { date: event.date, count: event.count };
-  })
+  const filteredByDays: filteredByDays[] = filteredAndGrouped.map(
+    (event: FilteredBySession): filteredByDays => {
+      return { date: event.date, count: event.count };
+    })
   res.json(filteredByDays);
 });
 
 router.get('/by-hours/:offset', (req: Request, res: Response) => {
   const offset: number = +req.params.offset;
   const allEvents: Event[] = getAllEvents();
-  const dateToCheck = new Date().valueOf() - convertDaysToMili(offset);
-  const filteredEvents = allEvents.filter((event) =>
+  const dateToCheck: number = new Date().valueOf() - convertDaysToMili(offset);
+  const filteredEvents: Event[] = allEvents.filter((event: Event): boolean =>
     convertDateToString(event.date) === convertDateToString(dateToCheck)
-  ).map((event) => {
+  ).map((event: Event): Event => {
     return { ...event, date: new Date(event.date).getHours() };
   });
-  const hoursArr = [];
-  for (let i = 0; i < 24; i++) {
+  const hoursArr: HourCount[] = [];
+  for (let i: number = 0; i < 24; i++) {
     if (i < 10) {
       hoursArr.push({ hour: `0${i}:00`, count: 0 });
     } else {
       hoursArr.push({ hour: `${i}:00`, count: 0 });
     }
   }
-  const eventsForCheck: any[] = [];
+  const eventsForCheck: Event[] = [];
   for (const eventToCheck of filteredEvents) {
-    const checker = eventsForCheck.findIndex((event) =>
+    const checker: number = eventsForCheck.findIndex((event: Event): boolean =>
       eventToCheck.session_id === event.session_id && eventToCheck.date === event.date
     );
     if (checker === -1) {
@@ -132,19 +159,14 @@ router.get('/by-hours/:offset', (req: Request, res: Response) => {
 });
 
 router.get('/all-filtered', (req: Request, res: Response) => {
+  req.query.offset = Number(req.query.offset)
   const filters: Filter = req.query;
-  const allEvents: any[] = getAllEvents();
-  let filteredEvents = allEvents;
+  const allEvents: Event[] = getAllEvents();
+  let filteredEvents: Event[] = allEvents;
   if (filters.search) {
     const reg: RegExp = new RegExp(filters.search, "i");
-    filteredEvents = allEvents.filter((event) => {
-      let checker = false;
-      for (const key in event) {
-        if (reg.test(event[key])) {
-          checker = true;
-        }
-      }
-      return checker;
+    filteredEvents = filteredEvents.filter((event: Event): boolean => {
+      return Object.values(event).some((value) => reg.test(value.toString()));
     });
   }
 
@@ -162,9 +184,12 @@ router.get('/all-filtered', (req: Request, res: Response) => {
         : secondEvent.date - firstEvent.date
     )
   };
-
+  const endArr: FilteredRes = filters.offset ? filters.offset < filteredEvents.length ?
+    { events: [...filteredEvents.slice(0, filters.offset)], more: true }
+    : { events: [...filteredEvents.slice(0, filters.offset)], more: false }
+    : { events: [...filteredEvents], more: false }
   filteredEvents = filteredEvents.slice(0, filters.offset)
-  res.json({ events: filteredEvents });
+  res.json(endArr);
 });
 
 router.get('/today', (req: Request, res: Response) => {
@@ -189,7 +214,7 @@ router.get('/retention', (req: Request, res: Response) => {
   const getSingedUsers = (startingDateInNumber: number): string[] => {
     return events
       .filter(
-        (event) =>
+        (event: Event): boolean =>
           startingDateInNumber + convertDaysToMili(7) > event.date &&
           event.date > startingDateInNumber &&
           event.name === "signup"
@@ -208,16 +233,16 @@ router.get('/retention', (req: Request, res: Response) => {
       newUsers: getSingedUsers(startDate).length,
     };
 
-    const weeklyRetention = [100];
+    const weeklyRetention: number[] = [100];
     let currentDateCheck: number = startDate + convertDaysToMili(7);
     while (true) {
       if (currentDateCheck > toStartOfTheDay(new Date().valueOf()) + convertDaysToMili(1)) {
         break;
       }
-      let countUserRetention = 0;
+      let countUserRetention: number = 0;
       const usersEvents: string[] = events
         .filter(
-          (event) =>
+          (event: Event): boolean =>
             currentDateCheck + convertDaysToMili(7) > event.date &&
             event.date >= currentDateCheck &&
             event.name === "login"
@@ -236,9 +261,9 @@ router.get('/retention', (req: Request, res: Response) => {
     }
     return { ...weeklyRetentionObject, weeklyRetention };
   };
-  const retentionsData = [];
-  let retentionsCounter = 0;
-  let numberStart = startingDateInNumber;
+  const retentionsData: weeklyRetentionObject[] = [];
+  let retentionsCounter: number = 0;
+  let numberStart: number = startingDateInNumber;
 
   while (numberStart < new Date().valueOf()) {
     if (getStringDates(numberStart)[0].slice(-5) === "10/25") {
@@ -267,12 +292,40 @@ router.post('/', (req: Request, res: Response) => {
   res.sendStatus(200)
 });
 
-router.get('/chart/os/:time', (req: Request, res: Response) => {
-  res.send('/chart/os/:time')
+router.get('/chart/os', (req: Request, res: Response) => {
+  const events: Event[] = getAllEvents()
+  const os: string[] = events.map((event: Event): string => event.os)
+    .filter((id: string, index: number, array: string[]): boolean => {
+      return array.indexOf(id) == index;
+    })
+  const osUsage: OsUsage[] = os.map((os: string): OsUsage => {
+    let usage: number = 0
+    events.forEach((event: Event): void => {
+      if (event.os === os) {
+        usage++
+      }
+    })
+    return { name: os, value: usage }
+  })
+  res.send(osUsage)
 })
 
-router.get('/chart/pageview/:time', (req: Request, res: Response) => {
-  res.send('/chart/pageview/:time')
+router.get('/chart/pageview', (req: Request, res: Response) => {
+  const events: Event[] = getAllEvents()
+  const pages: string[] = events.map((event: Event): string => event.url)
+    .filter((id: string, index: number, array: string[]): boolean => {
+      return array.indexOf(id) == index;
+    })
+  const pageViews: PageViews[] = pages.map((page: string): PageViews => {
+    let views: number = 0
+    events.forEach((event: Event): void => {
+      if (event.url === page) {
+        views++
+      }
+    })
+    return { name: page.replace('http://localhost3000/', ''), views: views }
+  })
+  res.send(pageViews)
 })
 
 router.get('/chart/timeonurl/:time', (req: Request, res: Response) => {
