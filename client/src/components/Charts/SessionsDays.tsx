@@ -14,7 +14,6 @@ const useStyles = makeStyles((theme: Theme) => ({
         flexDirection: 'column',
         textAlign: 'center',
         alignItems: "center",
-        border: '1px solid black'
     },
     textField: {
         marginLeft: theme.spacing(1),
@@ -62,7 +61,7 @@ const SessionsDays: React.FC = () => {
                 onChange={changeDate}
             />
             <LineChart
-                width={600}
+                width={300}
                 height={300}
                 data={chartsData}
                 margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
