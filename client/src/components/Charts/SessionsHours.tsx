@@ -14,7 +14,6 @@ const useStyles = makeStyles((theme: Theme) => ({
         flexDirection: 'column',
         textAlign: 'center',
         alignItems: "center",
-        border: '1px solid black'
     },
     pickers: {
         display: 'flex',
@@ -101,7 +100,7 @@ const SessionsHours: React.FC = () => {
                 />
             </div>
             <LineChart
-                width={600}
+                width={300}
                 height={300}
                 data={dataForChart}
                 margin={{ top: 5, right: 30, left: 20, bottom: 5 }}

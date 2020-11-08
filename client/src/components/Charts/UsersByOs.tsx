@@ -10,7 +10,6 @@ const useStyles = makeStyles((theme: Theme) => ({
         flexDirection: 'column',
         textAlign: 'center',
         alignItems: "center",
-        border: '1px solid black'
     },
     pickers: {
         display: 'flex',
@@ -25,9 +24,9 @@ const useStyles = makeStyles((theme: Theme) => ({
 const PieOs: React.FC = () => {
     const classes = useStyles();
     const [chartData, setChartData] = useState<PieOsInter[] | undefined>([])
-    const [index, setIndex] = useState<number>()
+    const [index, setIndex] = useState<number>(0)
 
-    const onPieEnter = (index: number): void => {
+    const onPieEnter = (data: MouseEvent,index: number): void => {
         setIndex(index)
     };
 
