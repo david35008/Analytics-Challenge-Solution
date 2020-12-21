@@ -81,8 +81,6 @@ describe("main test", () => {
       `/events/retention?dayZero=${dayZero}`
     ).expect(200);
     
-    // console.log(retentionData)
-
     expect(retentionData.length).toBe(6);
 
     expect(retentionData[0].newUsers).toBe(10);

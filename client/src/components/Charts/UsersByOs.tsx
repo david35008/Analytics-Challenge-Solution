@@ -3,21 +3,13 @@ import { ResponsiveContainer, PieChart, Pie, Sector } from 'recharts'
 import { httpClient } from '../../utils/asyncUtils'
 import { makeStyles, Theme } from "@material-ui/core/styles";
 import { PieOsInter, ActiveShapeInter } from '../../models/event';
+import { Title } from "./styledComponent";
+
 
 const useStyles = makeStyles((theme: Theme) => ({
     container: {
-        display: 'flex',
-        flexDirection: 'column',
-        textAlign: 'center',
-        alignItems: "center",
-    },
-    pickers: {
-        display: 'flex',
-    },
-    textField: {
-        marginLeft: theme.spacing(1),
-        marginRight: theme.spacing(1),
-        width: 200,
+        width: "100%",
+        height: "600px"
     },
 }));
 
@@ -26,7 +18,7 @@ const PieOs: React.FC = () => {
     const [chartData, setChartData] = useState<PieOsInter[] | undefined>([])
     const [index, setIndex] = useState<number>(0)
 
-    const onPieEnter = (data: MouseEvent,index: number): void => {
+    const onPieEnter = (data: MouseEvent, index: number): void => {
         setIndex(index)
     };
 
@@ -86,25 +78,23 @@ const PieOs: React.FC = () => {
 
     return (
         <div className={classes.container} >
-            <h1>Users By Os</h1>
-            <div style={{ width: '40%', minWidth: '400px', height: '250px' }}>
-                <ResponsiveContainer >
-                    <PieChart>
-                        <Pie
-                            activeIndex={index}
-                            activeShape={renderActiveShape}
-                            data={chartData}
-                            cx={210}
-                            cy={115}
-                            innerRadius={60}
-                            outerRadius={80}
-                            fill="#8884d8"
-                            dataKey="value"
-                            onMouseEnter={onPieEnter}
-                        />
-                    </PieChart>
-                </ResponsiveContainer>
-            </div>
+            <Title>Users By Os</Title>
+            <ResponsiveContainer width="100%" height="80%">
+                <PieChart>
+                    <Pie
+                        activeIndex={index}
+                        activeShape={renderActiveShape}
+                        data={chartData}
+                        // cx={210}
+                        // cy={115}
+                        innerRadius='50%'
+                        // outerRadius={80}
+                        fill="#8884d8"
+                        dataKey="value"
+                        onMouseEnter={onPieEnter}
+                    />
+                </PieChart>
+            </ResponsiveContainer>
         </div>
     );
 };

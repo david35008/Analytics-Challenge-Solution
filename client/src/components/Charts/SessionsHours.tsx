@@ -1,67 +1,92 @@
 import React, { useState, useEffect } from "react";
-import { httpClient } from '../../utils/asyncUtils';
-import { Tooltip, Legend, LineChart, Line, CartesianGrid, XAxis, YAxis, } from "recharts";
+import DateFnsUtils from "@date-io/date-fns";
+import { httpClient, diffrenceInDays } from '../../utils/asyncUtils';
+import { ResponsiveContainer, Tooltip, Legend, LineChart, Line, CartesianGrid, XAxis, YAxis, } from "recharts";
 import { makeStyles, Theme } from "@material-ui/core/styles";
+import Snackbar from "@material-ui/core/Snackbar";
+import MuiAlert, { AlertProps } from "@material-ui/lab/Alert";
+import { MuiPickersUtilsProvider } from "@material-ui/pickers";
 import TextField from '@material-ui/core/TextField';
 import { SessionsHoursInter } from '../../models/event';
+import { TitleAndDate, Title, MyKeyboardDatePicker } from "./styledComponent";
+
 
 export const OneHour: number = 1000 * 60 * 60;
 export const OneDay: number = OneHour * 24
 
 const useStyles = makeStyles((theme: Theme) => ({
-    container: {
-        display: 'flex',
-        flexDirection: 'column',
-        textAlign: 'center',
-        alignItems: "center",
+    root: {
+        width: "100%",
+        "& > * + *": {
+            marginTop: theme.spacing(2),
+        },
     },
     pickers: {
         display: 'flex',
-    },
-    textField: {
-        marginLeft: theme.spacing(1),
-        marginRight: theme.spacing(1),
-        width: 200,
-    },
+        // flexDirection: 'column'
+    }
 }));
+
+function Alert(props: AlertProps) {
+    return <MuiAlert elevation={6} variant="filled" {...props} />;
+}
+
 
 
 const SessionsHours: React.FC = () => {
     const classes = useStyles();
-    const [chartsData, setChartsData] = useState<SessionsHoursInter[] | undefined>([]);
-    const [chartsData1, setChartsData1] = useState<SessionsHoursInter[] | undefined>([]);
+    const [chartsData, setChartsData] = useState<SessionsHoursInter[] | null>([]);
+    const [chartsData1, setChartsData1] = useState<SessionsHoursInter[] | null>([]);
     const [selected, setSelected] = useState<number>(0);
-    const [selected1, setSelected1] = useState<number>(1);
+    const [selected1, setSelected1] = useState<number>(0);
+    const [selectedDate, setSelectedDate] = useState<Date | null>(new Date());
+    const [selectedDate1, setSelectedDate1] = useState<Date | null>(new Date());
+    const [open, setOpen] = React.useState(false);
 
-    const fetchChartsData = async () => {
-        const { data: events }: { data: SessionsHoursInter[] | undefined } = await httpClient.get(`http://localhost:3001/events/by-hours/${selected}`)
-        setChartsData(events)
-        const { data: events1 }: { data: SessionsHoursInter[] | undefined } = await httpClient.get(`http://localhost:3001/events/by-hours/${selected1}`)
-        setChartsData1(events1)
+    const fetchChartsData = async (cb: Function, num: number) => {
+        const { data: events }: { data: SessionsHoursInter[] | null } = await httpClient.get(`http://localhost:3001/events/by-hours/${num}`)
+        cb(events)
     }
 
-    useEffect(() => { fetchChartsData() }, [selected, selected1])
+    useEffect(() => {
+        fetchChartsData(setChartsData, selected);
+        fetchChartsData(setChartsData1, selected1)
+    }, [selected, selected1])
 
-    const changeDate = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-        const picked: number = Math.round((Date.now().valueOf() - new Date(e.target.value).valueOf()) / OneDay)
-        if (picked < 1) {
-            alert('Invalid Date')
-            setSelected(0)
-            e.target.value = new Date(Date.now()).toDateString()
+    const handleDateChange = (date: Date | null, cb: Function) => {
+        cb(date);
+    };
+
+    const handleClick = () => {
+        setOpen(true);
+    };
+
+    const handleClose = (event?: React.SyntheticEvent, reason?: string) => {
+        if (reason === "clickaway") {
+            return;
+        }
+
+        setOpen(false);
+    };
+
+
+    const changeSelectData = (cb: Function, date: Date | null) => {
+        const optionToOffset = diffrenceInDays(new Date(), date);
+        if (optionToOffset <= 0) {
+            cb(Math.abs(optionToOffset));
         } else {
-            setSelected(picked)
+            cb(0);
+            handleClick();
         }
     }
-    const changeDate1 = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-        const picked: number = Math.round((Date.now().valueOf() - new Date(e.target.value).valueOf()) / OneDay)
-        if (picked < 1) {
-            alert('Invalid Date')
-            setSelected1(0)
-            e.target.value = new Date(Date.now()).toDateString()
-        } else {
-            setSelected1(picked)
-        }
-    }
+
+    useEffect(() => {
+        changeSelectData(setSelected, selectedDate)
+        changeSelectData(setSelected1, selectedDate1)
+    }, [selectedDate, selectedDate1]);
+
+
+
 
     const dataForChart = chartsData1!.length > 2 ? chartsData!.map((day: SessionsHoursInter, i: number) => {
         return {
@@ -73,46 +98,65 @@ const SessionsHours: React.FC = () => {
 
 
     return (<>
-        <div className={classes.container} >
-            <h1>Sessions(hour)</h1>
-            <div className={classes.pickers} >
-                <TextField
-                    id="date"
-                    label="Main"
-                    type="date"
-                    defaultValue=''
-                    className={classes.textField}
-                    InputLabelProps={{
-                        shrink: true,
-                    }}
-                    onChange={changeDate}
-                />
-                <TextField
-                    id="date"
-                    label="Secondary"
-                    type="date"
-                    defaultValue=''
-                    className={classes.textField}
-                    InputLabelProps={{
-                        shrink: true,
-                    }}
-                    onChange={changeDate1}
-                />
+        <div style={{ width: "100%", height: "600px" }}>
+            <TitleAndDate>
+                <Title>Sessions By Hours</Title>
+                <div className={classes.pickers} >
+                    <MuiPickersUtilsProvider utils={DateFnsUtils}>
+                        <MyKeyboardDatePicker
+                            disableToolbar
+                            variant="inline"
+                            format="MM/dd/yyyy"
+                            margin="normal"
+                            id="date-picker-inline"
+                            label="Date picker inline"
+                            value={selectedDate}
+                            onChange={(data) => handleDateChange(data, setSelectedDate)}
+                            KeyboardButtonProps={{
+                                "aria-label": "change date",
+                            }}
+                        />
+                    </MuiPickersUtilsProvider>
+                    <MuiPickersUtilsProvider utils={DateFnsUtils}>
+                        <MyKeyboardDatePicker
+                            disableToolbar
+                            variant="inline"
+                            format="MM/dd/yyyy"
+                            margin="normal"
+                            id="date-picker-inline"
+                            label="Date picker inline"
+                            value={selectedDate1}
+                            onChange={(data) => handleDateChange(data, setSelectedDate1)}
+                            KeyboardButtonProps={{
+                                "aria-label": "change date",
+                            }}
+                        />
+                    </MuiPickersUtilsProvider>
+                </div>
+            </TitleAndDate>
+            <ResponsiveContainer width="100%" height="80%">
+                <LineChart
+                    width={300}
+                    height={300}
+                    data={dataForChart}
+                    margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
+                >
+                    <CartesianGrid strokeDasharray="3 3" />
+                    <XAxis dataKey="hour" />
+                    <YAxis />
+                    <Tooltip />
+                    <Legend />
+                    <Line type="monotone" dataKey='count1' stroke="#000000" />
+                    <Line type="monotone" dataKey='count' stroke="#82ca9d" />
+                </LineChart>
+            </ResponsiveContainer>
+            <div className={classes.root}>
+                <Snackbar open={open} autoHideDuration={6000} onClose={handleClose}>
+                    <Alert onClose={handleClose} severity="warning">
+                        You have selected a date about which we have no information!
+          </Alert>
+                </Snackbar>
             </div>
-            <LineChart
-                width={300}
-                height={300}
-                data={dataForChart}
-                margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
-            >
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="hour" />
-                <YAxis />
-                <Tooltip />
-                <Legend />
-                <Line type="monotone" dataKey='count1' stroke="#000000" />
-                <Line type="monotone" dataKey='count' stroke="#82ca9d" />
-            </LineChart>
         </div>
     </>
     );

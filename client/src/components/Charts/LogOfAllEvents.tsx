@@ -1,233 +1,294 @@
 import React, { useState, useEffect } from "react";
 import { httpClient } from '../../utils/asyncUtils';
-import { makeStyles, Theme } from '@material-ui/core/styles';
-import Box from '@material-ui/core/Box';
-import Collapse from '@material-ui/core/Collapse';
-import IconButton from '@material-ui/core/IconButton';
-import Table from '@material-ui/core/Table';
-import TableBody from '@material-ui/core/TableBody';
-import TableCell from '@material-ui/core/TableCell';
-import TableContainer from '@material-ui/core/TableContainer';
-import TableHead from '@material-ui/core/TableHead';
-import TableRow from '@material-ui/core/TableRow';
-import Typography from '@material-ui/core/Typography';
-import Paper from '@material-ui/core/Paper';
-import KeyboardArrowDownIcon from '@material-ui/icons/KeyboardArrowDown';
-import KeyboardArrowUpIcon from '@material-ui/icons/KeyboardArrowUp';
-import InfiniteScroll from "react-infinite-scroll-component";
-import Select from '@material-ui/core/Select';
-import InputLabel from '@material-ui/core/InputLabel';
-import MenuItem from '@material-ui/core/MenuItem';
-import FormControl from '@material-ui/core/FormControl';
-import { Event, CollapsibleTableProps, AllFiltered } from '../../models/event';
+import { Theme, createStyles, makeStyles } from "@material-ui/core/styles";
+import Accordion from "@material-ui/core/Accordion";
+import AccordionSummary from "@material-ui/core/AccordionSummary";
+import AccordionDetails from "@material-ui/core/AccordionDetails";
+import Typography from "@material-ui/core/Typography";
+import ExpandMoreIcon from "@material-ui/icons/ExpandMore";
+import { Event, Filter } from "../../models/event";
+import Button from "@material-ui/core/Button";
+import { blue } from "@material-ui/core/colors";
+import Select from "@material-ui/core/Select";
+import MenuItem from "@material-ui/core/MenuItem";
+import InputLabel from "@material-ui/core/InputLabel";
+import CircularProgress from "@material-ui/core/CircularProgress";
+import LinearProgress from "@material-ui/core/LinearProgress";
+import { Title, MyTextArea, MyFormControl } from "./styledComponent";
 
-const useRowStyles = makeStyles(() => ({
-    root: {
-        '& > *': {
-            borderBottom: 'unset',
-            minWidth: '150px'
-        },
+const useStyles = makeStyles((theme: Theme) =>
+  createStyles({
+    accordings: {
+      width: "100%",
+      display: "flex",
+      flexDirection: "column",
+      alignItems: "center",
+      marginTop: "20px",
     },
-}));
+    according: {
+      width: "80%",
+    },
+    heading: {
+      fontSize: theme.typography.pxToRem(15),
+      fontWeight: theme.typography.fontWeightRegular,
+    },
+    button: {
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "center",
+    },
+    wrapper: {
+      margin: theme.spacing(1),
+      position: "relative",
+    },
+    buttonSuccess: {
+      backgroundColor: blue[500],
+      "&:hover": {
+        backgroundColor: blue[700],
+      },
+    },
+    buttonProgress: {
+      color: blue[500],
+      position: "absolute",
+      top: "50%",
+      left: "50%",
+      marginTop: -12,
+      marginLeft: -12,
+    },
+    linearLoading: {
+      margin: "30px 0px",
+      width: "100%",
+      "& > * + *": {
+        marginTop: theme.spacing(2),
+        marginBottom: theme.spacing(2),
+      },
+    },
+  })
+);
 
-function Row(props: { event: Event }) {
-    const { event } = props;
-    const [open, setOpen] = useState<boolean>(false);
-    const classes = useRowStyles();
-    return (
-        <React.Fragment>
-            <TableRow className={classes.root}>
-                <TableCell>
-                    <IconButton aria-label="expand row" size="small" onClick={(): void => setOpen(!open)}>
-                        {open ? <KeyboardArrowUpIcon /> : <KeyboardArrowDownIcon />}
-                    </IconButton>
-                </TableCell>
-                <TableCell component="th" scope="row">
-                    User
-                </TableCell>
-                <TableCell align="right">{event.distinct_user_id}</TableCell>
-                <TableCell align="right">{event.name}</TableCell>
-            </TableRow>
-            <TableRow>
-                <TableCell style={{ width: '100%', paddingBottom: 0, paddingTop: 0 }} colSpan={6}>
-                    <Collapse in={open} timeout="auto" unmountOnExit>
-                        <Box margin={1}>
-                            <Typography variant="h6" gutterBottom component="div">
-                                Event Details
-              </Typography>
-                            <Table size="small" aria-label="purchases">
-                                <TableHead>
-                                    <TableRow>
-                                        <TableCell>Id</TableCell>
-                                        <TableCell align="left">Browser</TableCell>
-                                        <TableCell align="left">date</TableCell>
-                                        <TableCell align="left">Geolocation</TableCell>
-                                        <TableCell align="left">Os</TableCell>
-                                        <TableCell align="left">URL</TableCell>
-                                    </TableRow>
-                                </TableHead>
-                                <TableBody>
-                                    <TableRow key={event._id}>
-                                        <TableCell component="th" scope="row">
-                                            {event._id}
-                                        </TableCell>
-                                        <TableCell align="left">{event.browser}</TableCell>
-                                        <TableCell align="left">{`${new Date(event.date)}`}</TableCell>
-                                        <TableCell align="left">
-                                            lat: {event.geolocation.location.lat}
-                                            lng: {event.geolocation.location.lng}
-                                        </TableCell>
-                                        <TableCell align="left">{event.os}</TableCell>
-                                        <TableCell align="left">{event.url}</TableCell>
-                                    </TableRow>
-                                </TableBody>
-                            </Table>
-                        </Box>
-                    </Collapse>
-                </TableCell>
-            </TableRow>
-        </React.Fragment>
-    );
-}
+const AllEvents: React.FC = () => {
+  const classes = useStyles();
+  const [allEvents, setEvents] = useState<{ events: Event[]; more: boolean }>();
+  const [offset, setOffset] = useState<number>(10);
+  const [loading, setLoading] = useState(false);
+  const [linearLoading, setLinearLoading] = useState(false);
+  const [search, setSearch] = useState("");
+  const [sort, setSort] = useState("none");
+  const [type, setType] = useState("all");
+  const [browser, setBrowser] = useState("all");
 
-const CollapsibleTable: React.FC<CollapsibleTableProps> = (props) => {
-    const { chartsData } = props
-    const { setOffset } = props
-    return (
-        <TableContainer style={{ width: '100%' }} component={Paper}>
-            <Table aria-label="collapsible table">
-                <TableBody>
-                    <InfiniteScroll
-                        dataLength={chartsData ? chartsData.events.length : 0}
-                        next={(): void => {
-                            setOffset((prev: string): string => `${Number(prev) + 5}`)
-                        }}
-                        hasMore={chartsData ? chartsData.more : false}
-                        loader={<h4>Loading...</h4>}
-                        height={400}
-                        endMessage={
-                            <p style={{ textAlign: "center" }}>
-                                <b>Yay! You have seen it all</b>
-                            </p>
-                        }
-                    >
-                        {chartsData && chartsData.events.map((event: Event): JSX.Element => {
-                            return <Row key={event._id} event={event} />
-                        })}
-                    </InfiniteScroll>
-                </TableBody>
-            </Table>
-        </TableContainer>
-    );
-}
-const useStyles = makeStyles((theme: Theme) => ({
-    container: {
-        display: 'flex',
-        flexDirection: 'column',
-        textAlign: 'center',
-        alignItems: "center",
-        overflow: 'auto',
-        width:'100%',
-    },
-    textField: {
-        marginLeft: theme.spacing(1),
-        marginRight: theme.spacing(1),
-        width: 200,
-    },
-    section: {
-        display: 'flex',
-        // flexDirection: 'column',
-    },
-    formControl: {
-        display: 'flex',
-        flexDirection: 'column',
-        minWidth: '120px'
-    },
-}));
+  useEffect(() => {
+    (async (): Promise<void> => {
+      try {
+        const params: Filter = {
+          offset: offset,
+          search: search === "" ? undefined : search,
+          sorting: sort === "none" ? undefined : sort,
+          type: type === "all" ? undefined : type,
+          browser: browser === "all" ? undefined : browser,
+        };
+        const { data } = await httpClient.get(`http://localhost:3001/events/all-filtered`, {
+          params,
+        });
 
-const LogOfAllEvents: React.FC = () => {
-    const classes = useStyles();
-    const [chartsData, setChartsData] = useState<AllFiltered | undefined>()
-    const [offset, setOffset] = useState<string>('10');
-    const [type, setType] = useState<string>('');
-    const [search, setSearch] = useState<string>('');
-    const [sorting, setSorting] = useState<string>('');
-    const [browser, setBrowser] = useState<string>('');
+        if (loading) {
+          setTimeout(() => {
+            setEvents(data);
+            setLoading(false);
+          }, 1000);
+        } else if (linearLoading) {
+          setTimeout(() => {
+            setEvents(data);
+            setLinearLoading(false);
+          }, 1000);
+        } else {
+          setEvents(data);
+        }
+      } catch (error) {
+        console.error(error);
+      }
+    })();
+  }, [offset, search, sort, type, browser]);
 
-    const fetchChartsData = async (): Promise<void> => {
-        const { data }: { data: AllFiltered | undefined } = await httpClient.get(`
-        http://localhost:3001/events/all-filtered?offset=${offset}&type=${type}&search=${search}&sorting=${sorting}&browser=${browser}`)
-        setChartsData(data)
+  const handleButtonClick = async () => {
+    if (!loading) {
+      setLoading(true);
+      setOffset((prev) => prev + 10);
     }
+  };
 
-    useEffect(() => { fetchChartsData() }, [offset, type, sorting, browser, search])
-
-    const handleChangeType = (event: React.ChangeEvent<{ value: unknown }>): void => {
-        setType(event.target.value as string);
-    };
-    const handleChangeSorting = (event: React.ChangeEvent<{ value: unknown }>): void => {
-        setSorting(event.target.value as string);
-    };
-    const handleChangeBrowser = (event: React.ChangeEvent<{ value: unknown }>): void => {
-        setBrowser(event.target.value as string);
-    };
-
-    return (<>
-        <div className={classes.container} >
-            <h1>Log Of All Events</h1>
-            <div className={classes.section} >
-                <div className={classes.formControl} >
-                    <FormControl >
-                        <input
-                            placeholder="Search"
-                            onChange={(event: React.ChangeEvent<HTMLInputElement>): void => setSearch(event.target.value)}
-                        />
-                        <InputLabel id="demo-simple-select-label" >Type</InputLabel>
-                        <Select
-                            labelId="demo-simple-select-label"
-                            id="demo-simple-select"
-                            value={type}
-                            onChange={handleChangeType}
-                        >
-                            <MenuItem value={'signup'}>Sign Up</MenuItem>
-                            <MenuItem value={'login'}>Login</MenuItem>
-                            <MenuItem value={'pageView'}>Page View</MenuItem>
-                        </Select>
-                    </FormControl>
-                    <FormControl style={{ minWidth: '120px' }}>
-                        <InputLabel id="demo-simple-select-label">Sort</InputLabel>
-                        <Select
-                            labelId="demo-simple-select-label"
-                            id="demo-simple-select"
-                            value={sorting}
-                            onChange={handleChangeSorting}
-                        >
-                            <MenuItem value={'+date'}>DESC</MenuItem>
-                            <MenuItem value={'-date'}>ASC</MenuItem>
-                        </Select>
-                    </FormControl>
-                    <FormControl style={{ minWidth: '120px' }}>
-                        <InputLabel id="demo-simple-select-label">Browser</InputLabel>
-                        <Select
-                            labelId="demo-simple-select-label"
-                            id="demo-simple-select"
-                            value={browser}
-                            onChange={handleChangeBrowser}
-                        >
-                            <MenuItem value={'chrome'}>Chrome</MenuItem>
-                            <MenuItem value={'firefox'}>FireFox</MenuItem>
-                            <MenuItem value={'safari'}>Safari</MenuItem>
-                            <MenuItem value={'ie'}>IE</MenuItem>
-                            <MenuItem value={'other'}>Other</MenuItem>
-                        </Select>
-                    </FormControl>
-                </div>
-                {chartsData &&
-                    <CollapsibleTable chartsData={chartsData} setOffset={setOffset} />
-                }
-            </div>
+  const handleChange = (input: string) => (e: any): void => {
+    switch (input) {
+      case "search":
+        setLinearLoading(true);
+        setSearch(e.target.value);
+        break;
+      case "sort":
+        setLinearLoading(true);
+        setSort(e.target.value);
+        break;
+      case "type":
+        setLinearLoading(true);
+        setType(e.target.value);
+        break;
+      case "browser":
+        setLinearLoading(true);
+        setBrowser(e.target.value);
+        break;
+      default:
+        break;
+    }
+  };
+  return (
+    <>
+      <Title>All Events</Title>
+      <MyTextArea
+        label="Search"
+        // variant="outlined"
+        onChange={handleChange("search")}
+      />
+      <MyFormControl>
+        <InputLabel>Sort</InputLabel>
+        <Select
+          value={sort}
+          onChange={handleChange("sort")}
+          displayEmpty
+          MenuProps={{
+            anchorOrigin: {
+              vertical: "bottom",
+              horizontal: "left",
+            },
+            transformOrigin: {
+              vertical: "top",
+              horizontal: "left",
+            },
+            getContentAnchorEl: null,
+          }}
+        >
+          <MenuItem value="none">
+            <em>None</em>
+          </MenuItem>
+          <MenuItem value="+date">+date</MenuItem>
+          <MenuItem value="-date">-date</MenuItem>
+        </Select>
+      </MyFormControl>
+      <MyFormControl>
+        <InputLabel>Type</InputLabel>
+        <Select
+          value={type}
+          onChange={handleChange("type")}
+          displayEmpty
+          MenuProps={{
+            anchorOrigin: {
+              vertical: "bottom",
+              horizontal: "left",
+            },
+            transformOrigin: {
+              vertical: "top",
+              horizontal: "left",
+            },
+            getContentAnchorEl: null,
+          }}
+        >
+          <MenuItem value="all">
+            <em>All</em>
+          </MenuItem>
+          <MenuItem value="login">login</MenuItem>
+          <MenuItem value="signup">signup</MenuItem>
+          <MenuItem value="admin">admin</MenuItem>
+          <MenuItem value="/">/</MenuItem>
+        </Select>
+      </MyFormControl>
+      <MyFormControl>
+        <InputLabel>Browser</InputLabel>
+        <Select
+          value={browser}
+          onChange={handleChange("browser")}
+          displayEmpty
+          MenuProps={{
+            anchorOrigin: {
+              vertical: "bottom",
+              horizontal: "left",
+            },
+            transformOrigin: {
+              vertical: "top",
+              horizontal: "left",
+            },
+            getContentAnchorEl: null,
+          }}
+        >
+          <MenuItem value="all">
+            <em>All</em>
+          </MenuItem>
+          <MenuItem value="chrome">chrome</MenuItem>
+          <MenuItem value="safari">safari</MenuItem>
+          <MenuItem value="edge">edge</MenuItem>
+          <MenuItem value="firefox">firefox</MenuItem>
+          <MenuItem value="ie">ie</MenuItem>
+          <MenuItem value="other">other</MenuItem>
+        </Select>
+      </MyFormControl>
+      {linearLoading && (
+        <div className={classes.linearLoading}>
+          <LinearProgress />
         </div>
-    </>);
+      )}
+      {allEvents ? (
+        <>
+          <div className={classes.accordings}>
+            {allEvents.events.map((event) => {
+              return (
+                <Accordion key={event._id} className={classes.according}>
+                  <AccordionSummary
+                    expandIcon={<ExpandMoreIcon />}
+                    aria-controls="panel1a-content"
+                    id="panel1a-header"
+                  >
+                    <Typography className={classes.heading}>
+                      <b>User :</b>
+                      {event.distinct_user_id}
+                      {"     "}
+                      <b>Event :</b> {event.name}
+                    </Typography>
+                  </AccordionSummary>
+                  <AccordionDetails>
+                    <Typography>
+                      <b>Browser :</b> {event.browser}
+                      <br />
+                      <b>Os :</b> {event.os}
+                      <br />
+                      <b>URL :</b> {event.url}
+                      <br />
+                      <b>Date :</b> {new Date(event.date).toDateString()}{"  ,  "}
+                      {new Date(event.date).toTimeString().slice(0, 8)}
+                      <br />
+                    </Typography>
+                  </AccordionDetails>
+                </Accordion>
+              );
+            })}
+          </div>
+          {allEvents.more && (
+            <div className={classes.button}>
+              <div className={classes.wrapper}>
+                <Button
+                  variant="contained"
+                  color="primary"
+                  disabled={loading}
+                  onClick={handleButtonClick}
+                >
+                  More events
+                </Button>
+                {loading && <CircularProgress size={24} className={classes.buttonProgress} />}
+              </div>
+            </div>
+          )}
+        </>
+      ) : (
+        <div>loading</div>
+      )}
+    </>
+  );
 };
 
-export default LogOfAllEvents;
+export default AllEvents;
