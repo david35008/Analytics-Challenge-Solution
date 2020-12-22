@@ -7,7 +7,6 @@ import AccordionDetails from "@material-ui/core/AccordionDetails";
 import Typography from "@material-ui/core/Typography";
 import ExpandMoreIcon from "@material-ui/icons/ExpandMore";
 import { Event, Filter } from "../../models/event";
-import Button from "@material-ui/core/Button";
 import { blue } from "@material-ui/core/colors";
 import Select from "@material-ui/core/Select";
 import MenuItem from "@material-ui/core/MenuItem";
@@ -26,15 +25,7 @@ const useStyles = makeStyles((theme: Theme) =>
       alignItems: "center",
       marginTop: "20px",
       height: "600px",
-
-    },
-    infiniteScroll: {
-      width: "40vw",
-      display: "flex",
-      flexDirection: "column",
-      alignItems: "center",
-      overflow: 'auto',
-      height: "600px",
+      overflow: 'auto'
     },
     according: {
       width: "80%",
@@ -80,7 +71,7 @@ const useStyles = makeStyles((theme: Theme) =>
 const AllEvents: React.FC = () => {
   const classes = useStyles();
   const [allEvents, setEvents] = useState<{ events: Event[]; more: boolean }>();
-  const [offset, setOffset] = useState<number>(20);
+  const [offset, setOffset] = useState<number>(10);
   const [loading, setLoading] = useState(false);
   const [linearLoading, setLinearLoading] = useState(false);
   const [search, setSearch] = useState("");
@@ -88,37 +79,40 @@ const AllEvents: React.FC = () => {
   const [type, setType] = useState("all");
   const [browser, setBrowser] = useState("all");
 
-  useEffect(() => {
-    (async (): Promise<void> => {
-      try {
-        const params: Filter = {
-          offset: offset,
-          search: search === "" ? undefined : search,
-          sorting: sort === "none" ? undefined : sort,
-          type: type === "all" ? undefined : type,
-          browser: browser === "all" ? undefined : browser,
-        };
-        const { data } = await httpClient.get(`http://localhost:3001/events/all-filtered`, {
-          params,
-        });
+  const fetchData = async (): Promise<void> => {
+    try {
+      const params: Filter = {
+        offset: offset,
+        search: search === "" ? undefined : search,
+        sorting: sort === "none" ? undefined : sort,
+        type: type === "all" ? undefined : type,
+        browser: browser === "all" ? undefined : browser,
+      };
+      const { data } = await httpClient.get(`http://localhost:3001/events/all-filtered`, {
+        params,
+      });
 
-        if (loading) {
-          setTimeout(() => {
-            setEvents(data);
-            setLoading(false);
-          }, 1000);
-        } else if (linearLoading) {
-          setTimeout(() => {
-            setEvents(data);
-            setLinearLoading(false);
-          }, 1000);
-        } else {
+      if (loading) {
+        setTimeout(() => {
           setEvents(data);
-        }
-      } catch (error) {
-        console.error(error);
+          setLoading(false);
+        }, 1000);
+      } else if (linearLoading) {
+        setTimeout(() => {
+          setEvents(data);
+          setLinearLoading(false);
+        }, 1000);
+      } else {
+        setEvents(data);
       }
-    })();
+    } catch (error) {
+      console.error(error);
+    }
+  }
+
+  useEffect(() => {
+    fetchData();
+    // eslint-disable-next-line
   }, [offset, search, sort, type, browser]);
 
   const handleChange = (input: string) => (e: any): void => {
@@ -232,63 +226,58 @@ const AllEvents: React.FC = () => {
           <MenuItem value="other">other</MenuItem>
         </Select>
       </MyFormControl>
-      {linearLoading && (
-        <div className={classes.linearLoading}>
-          <LinearProgress />
-        </div>
-      )}
       {allEvents ? (
-        <div className={classes.accordings}>
-          <InfiniteScroll
-            className={classes.infiniteScroll}
-            dataLength={allEvents ? allEvents.events.length : 0}
-            next={(): void => {
-              setOffset((prev: number): number => prev + 5)
-            }}
-            hasMore={allEvents ? allEvents.more : false}
-            loader={<LinearProgress />}
-            height={650}
-            endMessage={
-              <p style={{ textAlign: "center" }}>
-                <b>Yay! You have seen it all</b>
-              </p>
-            }
-          >
-            {allEvents.events.map((event) => {
-              return (
-                <Accordion key={event._id} className={classes.according}>
-                  <AccordionSummary
-                    expandIcon={<ExpandMoreIcon />}
-                    aria-controls="panel1a-content"
-                    id="panel1a-header"
-                  >
-                    <Typography className={classes.heading}>
-                      <b>User :</b>
-                      {event.distinct_user_id}
-                      {"     "}
-                      <b>Event :</b> {event.name}
-                    </Typography>
-                  </AccordionSummary>
-                  <AccordionDetails>
-                    <Typography>
-                      <b>Browser :</b> {event.browser}
-                      <br />
-                      <b>Os :</b> {event.os}
-                      <br />
-                      <b>URL :</b> {event.url}
-                      <br />
-                      <b>Date :</b> {new Date(event.date).toDateString()}{"  ,  "}
-                      {new Date(event.date).toTimeString().slice(0, 8)}
-                      <br />
-                    </Typography>
-                  </AccordionDetails>
-                </Accordion>
-              );
-            })}
-          </InfiniteScroll>
-        </div>
+        <InfiniteScroll
+          className={classes.accordings}
+          dataLength={allEvents ? allEvents.events.length : 0}
+          next={(): void => {
+            setOffset((prev: number): number => prev + 5)
+          }}
+          hasMore={allEvents ? allEvents.more : false}
+          loader={<div className={classes.linearLoading}>
+            <LinearProgress />
+          </div>}
+          height={400}
+          endMessage={
+            <p style={{ textAlign: "center" }}>
+              <b>Yay! You have seen it all</b>
+            </p>
+          }
+        >
+          {allEvents.events.map((event) => {
+            return (
+              <Accordion key={event._id} className={classes.according}>
+                <AccordionSummary
+                  expandIcon={<ExpandMoreIcon />}
+                  aria-controls="panel1a-content"
+                  id="panel1a-header"
+                >
+                  <Typography className={classes.heading}>
+                    <b>User :</b>
+                    {event.distinct_user_id}
+                    {"     "}
+                    <b>Event :</b> {event.name}
+                  </Typography>
+                </AccordionSummary>
+                <AccordionDetails>
+                  <Typography>
+                    <b>Browser :</b> {event.browser}
+                    <br />
+                    <b>Os :</b> {event.os}
+                    <br />
+                    <b>URL :</b> {event.url}
+                    <br />
+                    <b>Date :</b> {new Date(event.date).toDateString()}{"  ,  "}
+                    {new Date(event.date).toTimeString().slice(0, 8)}
+                    <br />
+                  </Typography>
+                </AccordionDetails>
+              </Accordion>
+            );
+          })}
+        </InfiniteScroll>
       ) : (
-          <div>loading</div>
+          <CircularProgress />
         )}
     </>
   );

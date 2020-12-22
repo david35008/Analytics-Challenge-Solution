@@ -6,7 +6,6 @@ import { makeStyles, Theme } from "@material-ui/core/styles";
 import Snackbar from "@material-ui/core/Snackbar";
 import MuiAlert, { AlertProps } from "@material-ui/lab/Alert";
 import { MuiPickersUtilsProvider } from "@material-ui/pickers";
-import TextField from '@material-ui/core/TextField';
 import { SessionsHoursInter } from '../../models/event';
 import { TitleAndDate, Title, MyKeyboardDatePicker } from "./styledComponent";
 
@@ -83,6 +82,7 @@ const SessionsHours: React.FC = () => {
     useEffect(() => {
         changeSelectData(setSelected, selectedDate)
         changeSelectData(setSelected1, selectedDate1)
+        // eslint-disable-next-line
     }, [selectedDate, selectedDate1]);
 
 

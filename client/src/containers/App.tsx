@@ -3,7 +3,6 @@ import { Switch, Route, Redirect } from "react-router-dom";
 import { useService, useMachine } from "@xstate/react";
 import { makeStyles } from "@material-ui/core/styles";
 import { CssBaseline } from "@material-ui/core";
-import DashBoard from "./DashBoard";
 import { snackbarMachine } from "../machines/snackbarMachine";
 import { notificationsMachine } from "../machines/notificationsMachine";
 import { authService } from "../machines/authMachine";

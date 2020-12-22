@@ -1,12 +1,11 @@
 import React, { useState, useEffect } from "react";
 import DateFnsUtils from "@date-io/date-fns";
 import { httpClient, diffrenceInDays } from '../../utils/asyncUtils';
-import { ResponsiveContainer, Tooltip, Legend, LineChart, Line, CartesianGrid, XAxis, YAxis, } from "recharts";
+import { ResponsiveContainer, Tooltip, LineChart, Line, CartesianGrid, XAxis, YAxis, } from "recharts";
 import { makeStyles, Theme } from "@material-ui/core/styles";
 import Snackbar from "@material-ui/core/Snackbar";
 import MuiAlert, { AlertProps } from "@material-ui/lab/Alert";
 import { MuiPickersUtilsProvider } from "@material-ui/pickers";
-import { SessionsHoursInter } from '../../models/event';
 import { TitleAndDate, Title, MyKeyboardDatePicker } from "./styledComponent";
 
 export const OneHour: number = 1000 * 60 * 60;
@@ -44,7 +43,7 @@ const SessionsDays: React.FC = () => {
                 if (data.length > 0) {
                     setDataByDay(data);
                 } else {
-                    setDataByDay([{ date: `${new Date().toDateString()}`, count: 0 }, { date:`${new Date().toDateString()}`, count: 0 }]);
+                    setDataByDay([{ date: `${new Date().toDateString()}`, count: 0 }, { date: `${new Date().toDateString()}`, count: 0 }]);
                 }
             } catch (error) {
                 console.error(error);
