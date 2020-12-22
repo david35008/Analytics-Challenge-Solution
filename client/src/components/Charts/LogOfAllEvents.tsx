@@ -14,6 +14,7 @@ import MenuItem from "@material-ui/core/MenuItem";
 import InputLabel from "@material-ui/core/InputLabel";
 import CircularProgress from "@material-ui/core/CircularProgress";
 import LinearProgress from "@material-ui/core/LinearProgress";
+import InfiniteScroll from "react-infinite-scroll-component";
 import { Title, MyTextArea, MyFormControl } from "./styledComponent";
 
 const useStyles = makeStyles((theme: Theme) =>
@@ -24,6 +25,16 @@ const useStyles = makeStyles((theme: Theme) =>
       flexDirection: "column",
       alignItems: "center",
       marginTop: "20px",
+      height: "600px",
+
+    },
+    infiniteScroll: {
+      width: "40vw",
+      display: "flex",
+      flexDirection: "column",
+      alignItems: "center",
+      overflow: 'auto',
+      height: "600px",
     },
     according: {
       width: "80%",
@@ -69,7 +80,7 @@ const useStyles = makeStyles((theme: Theme) =>
 const AllEvents: React.FC = () => {
   const classes = useStyles();
   const [allEvents, setEvents] = useState<{ events: Event[]; more: boolean }>();
-  const [offset, setOffset] = useState<number>(10);
+  const [offset, setOffset] = useState<number>(20);
   const [loading, setLoading] = useState(false);
   const [linearLoading, setLinearLoading] = useState(false);
   const [search, setSearch] = useState("");
@@ -109,13 +120,6 @@ const AllEvents: React.FC = () => {
       }
     })();
   }, [offset, search, sort, type, browser]);
-
-  const handleButtonClick = async () => {
-    if (!loading) {
-      setLoading(true);
-      setOffset((prev) => prev + 10);
-    }
-  };
 
   const handleChange = (input: string) => (e: any): void => {
     switch (input) {
@@ -234,8 +238,22 @@ const AllEvents: React.FC = () => {
         </div>
       )}
       {allEvents ? (
-        <>
-          <div className={classes.accordings}>
+        <div className={classes.accordings}>
+          <InfiniteScroll
+            className={classes.infiniteScroll}
+            dataLength={allEvents ? allEvents.events.length : 0}
+            next={(): void => {
+              setOffset((prev: number): number => prev + 5)
+            }}
+            hasMore={allEvents ? allEvents.more : false}
+            loader={<LinearProgress />}
+            height={650}
+            endMessage={
+              <p style={{ textAlign: "center" }}>
+                <b>Yay! You have seen it all</b>
+              </p>
+            }
+          >
             {allEvents.events.map((event) => {
               return (
                 <Accordion key={event._id} className={classes.according}>
@@ -267,26 +285,11 @@ const AllEvents: React.FC = () => {
                 </Accordion>
               );
             })}
-          </div>
-          {allEvents.more && (
-            <div className={classes.button}>
-              <div className={classes.wrapper}>
-                <Button
-                  variant="contained"
-                  color="primary"
-                  disabled={loading}
-                  onClick={handleButtonClick}
-                >
-                  More events
-                </Button>
-                {loading && <CircularProgress size={24} className={classes.buttonProgress} />}
-              </div>
-            </div>
-          )}
-        </>
+          </InfiniteScroll>
+        </div>
       ) : (
-        <div>loading</div>
-      )}
+          <div>loading</div>
+        )}
     </>
   );
 };
