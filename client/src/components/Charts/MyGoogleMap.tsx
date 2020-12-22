@@ -20,13 +20,13 @@ const useStyles = makeStyles((theme: Theme) => ({
 }));
 const MyGoogleMap: React.FC = () => {
     const classes = useStyles();
-    const [myFocus, setMyFocus] = useState<Location>({ lat: 31.768318, lng: 35.213711 })
+    const [myFocus] = useState<Location>({ lat: 31.768318, lng: 35.213711 })
     const [markers, setMarkers] = useState<Event[]>([]);
 
 
     const mapContainerStyle = {
-        width: "400px",
-        height: "300px",
+        width: "100%",
+        height: "400px",
     };
 
     const options = {

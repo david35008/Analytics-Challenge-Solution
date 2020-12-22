@@ -1,9 +1,9 @@
-import React, { lazy, Suspense } from "react";
+import React, { lazy, Suspense, useState } from "react";
 import ErrorBoundary from '../components/Charts/ErrorBoundary';
 import Loading from '../components/Charts/Loading';
-import { makeStyles } from "@material-ui/core/styles";
 import Card from '@material-ui/core/Card';
-import styled from 'styled-components'
+import ViewSelector from "../components/Charts/ViewSelector";
+import { PaperContainer, PageTitle, Display } from "../components/Charts/styledComponent";
 
 const MyGoogleMap = lazy(() => import("../components/Charts/MyGoogleMap"));
 const SessionsDays = lazy(() => import("../components/Charts/SessionsDays"));
@@ -13,113 +13,67 @@ const UsersByOs = lazy(() => import("../components/Charts/UsersByOs"));
 const RetentionCohortWeek = lazy(() => import("../components/Charts/RetentionCohortWeek"));
 const LogOfAllEvents = lazy(() => import("../components/Charts/LogOfAllEvents"));
 
-const useStyles = makeStyles(() => ({
-  MyDashBoard: {
-    display: "flex",
-    flexWrap: 'wrap',
-    padding: '10px',
-    width: '100%',
-    border: '2px solid black',
-    borderRadius: '10px',
-  },
-}));
-
-const MyGrid = styled.div`
-display: grid;
-padding: '10px';
-width: '100%';
-border: '2px solid black';
-border-radius: '10px';
-grid-template-areas:
-"retention retention"
-"map sessionsDay"
-"sessionsHour pageView"
-"log byOs";
-grid-template-rows: 1fr 1fr 1fr 1fr;
-grid-template-columns: 1fr 1fr;
-gap: '10px';
-max-width:'100vw';
-@media (max-width: 768px) {
-  display: grid;
-padding: '10px';
-width: '100%';
-border: '2px solid black';
-border-radius: '10px';
-grid-template-areas:
-"retention"
-"map"
-"sessionsDay"
-"sessionsHour"
-"pageView"
-"byOs"
-"log";
-grid-template-rows: 1fr 1fr 1fr 1fr 1fr 1fr 1fr;
-grid-template-columns: 1fr ;
-gap: '10px';
-max-width:'100vw';
-  }
-`;
-
 const DashBoard: React.FC = () => {
-
-  const classes = useStyles();
+  const [view, setView] = useState<string>("gallery");
 
   return (
     <>
-      <h1>My DashBoard</h1>
-      <MyGrid>
-      <Suspense fallback={<Loading />}>
-        <ErrorBoundary>
-          <div style={{gridArea: 'retention',}}>
-          <Card>
-            <RetentionCohortWeek />
-          </Card>
-          </div>
-        </ErrorBoundary>
-        <ErrorBoundary>
-        <div style={{gridArea: 'map'}}>
-          <Card>
-            <MyGoogleMap />
-          </Card>
-          </div>
-        </ErrorBoundary>
-        <ErrorBoundary>
-        <div style={{gridArea: 'sessionsDay'}}>
-          <Card>
-            <SessionsDays />
-          </Card>
-          </div>
-        </ErrorBoundary>
-        <ErrorBoundary>
-        <div style={{gridArea: 'sessionsHour'}}>
-          <Card>
-            <SessionsHours />
-          </Card>
-          </div>
-        </ErrorBoundary>
-        <ErrorBoundary>
-        <div style={{gridArea: 'pageView'}}>
-          <Card>
-            <ViewsPerPage />
-          </Card>
-          </div>
-        </ErrorBoundary>
-        <ErrorBoundary>
-        <div style={{gridArea: 'byOs'}}>
-          <Card>
-            <UsersByOs />
-          </Card>
-          </div>
-        </ErrorBoundary>
-        <ErrorBoundary>
-        <div style={{gridArea: 'log'}}>
-          <Card>
-            <LogOfAllEvents />
-          </Card>
-          </div>
-        </ErrorBoundary>
-      </Suspense>
-    </MyGrid>
+      <PageTitle>this is DashBoard admin area</PageTitle>
+      <ViewSelector view={view} setView={setView} />
+      <Display className={view}>
+        <Suspense fallback={<Loading />}>
+
+          <ErrorBoundary>
+            <PaperContainer>
+              <Card>
+                <MyGoogleMap />
+              </Card>
+            </PaperContainer>
+          </ErrorBoundary>
+          <ErrorBoundary>
+            <PaperContainer>
+              <Card>
+                <SessionsDays />
+              </Card>
+            </PaperContainer>
+          </ErrorBoundary>
+          <ErrorBoundary>
+            <PaperContainer>
+              <Card>
+                <SessionsHours />
+              </Card>
+            </PaperContainer>
+          </ErrorBoundary>
+          <ErrorBoundary>
+            <PaperContainer>
+              <Card>
+                <ViewsPerPage />
+              </Card>
+            </PaperContainer>
+          </ErrorBoundary>
+          <ErrorBoundary>
+            <PaperContainer>
+              <Card>
+                <UsersByOs />
+              </Card>
+            </PaperContainer>
+          </ErrorBoundary>
+          <ErrorBoundary>
+            <PaperContainer>
+              <Card>
+                <LogOfAllEvents />
+              </Card>
+            </PaperContainer>
+          </ErrorBoundary>
+          <ErrorBoundary>
+            <PaperContainer>
+              <Card>
+                <RetentionCohortWeek />
+              </Card>
+            </PaperContainer>
+          </ErrorBoundary>
+        </Suspense>
+      </Display>
     </>
   );
 };

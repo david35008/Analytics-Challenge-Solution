@@ -11,6 +11,15 @@ export interface Event {
   browser: browser;
   geolocation: GeoLocation;
 }
+
+export interface Filter {
+  sorting?: string;
+  type?: string;
+  browser?: string;
+  search?: string;
+  offset?: number;
+}
+
 export interface AllFiltered {
   events: Event[];
   more: boolean;

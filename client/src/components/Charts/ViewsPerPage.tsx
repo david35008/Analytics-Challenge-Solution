@@ -1,20 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { ResponsiveContainer, BarChart, CartesianGrid, XAxis, YAxis, Tooltip, Bar } from 'recharts'
 import { httpClient } from '../../utils/asyncUtils'
-import { makeStyles, Theme } from "@material-ui/core/styles";
+import { makeStyles } from "@material-ui/core/styles";
 import { ViewsPerPageInter } from '../../models/event';
+import { Title } from "./styledComponent";
 
-const useStyles = makeStyles((theme: Theme) => ({
+const useStyles = makeStyles(() => ({
     container: {
-        display: 'flex',
-        flexDirection: 'column',
-        textAlign: 'center',
-        alignItems: "center",
-    },
-    textField: {
-        marginLeft: theme.spacing(1),
-        marginRight: theme.spacing(1),
-        width: 200,
+        width: "100%",
+        height: "600px"
     },
 }));
 
@@ -31,8 +25,8 @@ const ViewsPerPage: React.FC = () => {
 
     return (
         <div className={classes.container}>
-            <h1>Views Per Page</h1>
-            <ResponsiveContainer width={300} height={300} >
+            <Title>Views Per Page</Title>
+            <ResponsiveContainer width="100%" height="80%">
                 <BarChart data={chartData}>
                     <CartesianGrid strokeDasharray="3 3" />
                     <XAxis dataKey="name" />

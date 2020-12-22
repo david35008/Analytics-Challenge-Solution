@@ -1,170 +1,123 @@
 import React, { useState, useEffect } from "react";
 import { httpClient } from '../../utils/asyncUtils';
-import { withStyles, Theme, createStyles, makeStyles } from '@material-ui/core/styles';
+import { makeStyles } from '@material-ui/core/styles';
 import Table from '@material-ui/core/Table';
 import TableBody from '@material-ui/core/TableBody';
-import TableCell from '@material-ui/core/TableCell';
 import TableContainer from '@material-ui/core/TableContainer';
-import TableHead from '@material-ui/core/TableHead';
 import TableRow from '@material-ui/core/TableRow';
-import Paper from '@material-ui/core/Paper';
-import TextField from '@material-ui/core/TextField';
-import { weeklyRetentionObject, CustomizedTablesType } from '../../models/event';
+import DateFnsUtils from "@date-io/date-fns";
+import { weeklyRetentionObject } from '../../models/event';
+import { MyTableHead, MyTableCell, Title, TitleAndDate, MyKeyboardDatePicker } from "./styledComponent";
+import { MuiPickersUtilsProvider } from "@material-ui/pickers";
+
 
 export const OneHour: number = 1000 * 60 * 60;
 export const OneDay: number = OneHour * 24
 export const OneWeek: number = OneDay * 7
 
-const StyledTableCell = withStyles((theme: Theme) =>
-    createStyles({
-        head: {
-            backgroundColor: theme.palette.common.black,
-            color: theme.palette.common.white,
-        },
-        body: {
-            fontSize: 14,
-        },
-    }),
-)(TableCell);
-
-const StyledTableRow = withStyles((theme: Theme) =>
-    createStyles({
-        root: {
-            '&:nth-of-type(odd)': {
-                backgroundColor: theme.palette.action.hover,
-            },
-        },
-    }),
-)(TableRow);
-
-
-const useStyles = makeStyles((theme: Theme) => ({
-    table: {
-    },
-    container: {
-        display: 'flex',
-        flexDirection: 'column',
-        textAlign: 'center',
+const useStyles = makeStyles({
+    root: {
+        width: "100%",
+        display: "flex",
+        flexDirection: "column",
         alignItems: "center",
-        width: '100%',
+        marginTop: "20px",
     },
-    textField: {
-        marginLeft: theme.spacing(1),
-        marginRight: theme.spacing(1),
-        width: 200,
+    table: {
+        minWidth: "100%",
     },
-}));
+});
 
-function CustomizedTables({ chartsData }: { chartsData: weeklyRetentionObject[] | undefined }) {
+const Cohort: React.FC = () => {
     const classes = useStyles();
-    const [allUserReduce, setAllUserReduce] = useState<CustomizedTablesType>([])
-
+    const [data, setData] = useState<weeklyRetentionObject[]>();
+    const [selectedDate, setSelectedDate] = useState<Date | null>(new Date(2020, 9, 1));
 
     useEffect(() => {
-        const allRetentions = chartsData!.map((element) => element.weeklyRetention)
-        const newArr: number[] = allRetentions.map((retention: CustomizedTablesType, index: number) => {
-            if (index === 0) {
-                return 100
-            } else {
-                const spec: (number | undefined)[] = allRetentions.map((retention1: number[]) => {
-                    if (retention1[index]) {
-                        return retention1[index]
-                    }
-                }).filter((element: number | undefined) => !(!element))
-                if (spec.length > 0) {
-                    return spec.reduce((sum: number, present: number | undefined) => {
-                        return sum + present!
-                    }, 0) / spec!.length
-                } else {
-                    return 0
+        (async (): Promise<void> => {
+            if (selectedDate) {
+                try {
+                    const { data } = await httpClient.get(
+                        `http://localhost:3001/events/retention?dayZero=${selectedDate.getTime()}`
+                    );
+                    setData(data);
+                } catch (error) {
+                    console.error(error);
                 }
             }
-        }
-        )
-        setAllUserReduce(newArr)
-    }, [chartsData])
+        })();
+    }, [selectedDate]);
 
-    return (
-        <TableContainer component={Paper}>
-            <Table className={classes.table} aria-label="customized table">
-                <TableHead>
-                    <TableRow>
-                        <StyledTableCell></StyledTableCell>
-                        {chartsData!.length > 0 && chartsData!.map((week: weeklyRetentionObject): JSX.Element =>
-                            <StyledTableCell>Week {week.registrationWeek}</StyledTableCell>
-                        )}
-                    </TableRow>
-                </TableHead>
-                <TableBody>
-                    <StyledTableRow >
-                        <StyledTableCell component="th" scope="row">
-                            All Users <br /> {chartsData!.reduce((sum: number, present: weeklyRetentionObject) => {
-                            return sum + present.newUsers
-                        }, 0)}
-                        </StyledTableCell>
-                        {allUserReduce && allUserReduce.map((percent: number) => (
-                            <StyledTableCell style={+percent > 80 ? { backgroundColor: '#3D5A80', color: 'white' } : +percent > 40 ? { backgroundColor: '#98C1D9' } : { backgroundColor: '#E0FBFC' }} align="right">{percent}%</StyledTableCell>
-                        ))}
-                    </StyledTableRow>
-                    {chartsData!.map((row: weeklyRetentionObject): JSX.Element => (
-                        <StyledTableRow key={row.start}>
-                            <StyledTableCell component="th" scope="row">
-                                {row.start}-{row.end}<br />{row.newUsers} Users
-                            </StyledTableCell>
-                            {row.weeklyRetention && row.weeklyRetention.map((percent: number) =>
-                                <StyledTableCell style={+percent > 80 ? { backgroundColor: '#3D5A80', color: 'white' } : +percent > 40 ? { backgroundColor: '#98C1D9' } : { backgroundColor: '#E0FBFC' }} align="right">{percent}%</StyledTableCell>)}
-                        </StyledTableRow>
-                    ))}
-                </TableBody>
-            </Table>
-        </TableContainer>
-    );
-}
-
-
-
-const RetentionCohort: React.FC = () => {
-    const classes = useStyles();
-    const [chartsData, setChartsData] = useState<weeklyRetentionObject[] | undefined>()
-    const [dayZero, setDayZero] = useState<number>((new Date(new Date().toDateString()).getTime() + 6 * OneHour) - 5 * OneWeek)
-
-    const fetchChartsData = async () => {
-        const { data }: { data: weeklyRetentionObject[] | undefined } = await httpClient.get(`http://localhost:3001/events/retention?dayZero=${dayZero}`);
-        setChartsData(data);
-    }
-
-    useEffect(() => { fetchChartsData() }, [dayZero])
-
-    const changeDate = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>): void => {
-        const zero: number = new Date(e.target.value).valueOf()
-        if (zero > Date.now().valueOf()) {
-            alert('Invalid Date')
-            setDayZero(0)
-            e.target.value = new Date(Date.now()).toDateString()
+    const getClassName = (index: number, percent: number): string => {
+        if (index === 0) {
+            return "firstCell";
         } else {
-            setDayZero(zero)
-        }
-    }
-
-    return (<>
-        <div className={classes.container} >
-            <h1>Retention Cohort Week</h1>
-            <TextField
-                id="date"
-                label="Pick Offset Day"
-                type="date"
-                defaultValue=''
-                className={classes.textField}
-                InputLabelProps={{
-                    shrink: true,
-                }}
-                onChange={changeDate}
-            />
-            {chartsData &&
-                <CustomizedTables chartsData={chartsData} />
+            if (percent > 80) {
+                return "high";
+            } else if (percent < 80 && percent > 40) {
+                return "medium ";
+            } else {
+                return "low";
             }
-        </div>
-    </>);
+        }
+    };
+
+    const handleDateChange = (date: Date | null) => {
+        setSelectedDate(date);
+    };
+    return (
+        <>
+            <TitleAndDate>
+                <Title>Retention Cohort Week By Week</Title>
+                <MuiPickersUtilsProvider utils={DateFnsUtils}>
+                    <MyKeyboardDatePicker
+                        disableToolbar
+                        variant="inline"
+                        format="MM/dd/yyyy"
+                        margin="normal"
+                        id="date-picker-inline"
+                        label="Date picker inline"
+                        value={selectedDate}
+                        onChange={handleDateChange}
+                        KeyboardButtonProps={{
+                            "aria-label": "change date",
+                        }}
+                    />
+                </MuiPickersUtilsProvider>
+            </TitleAndDate>
+            <div className={classes.root} >
+                {data && (
+                    <TableContainer>
+                        <Table className={classes.table} aria-label="simple table">
+                            <MyTableHead>
+                                <TableRow>
+                                    <MyTableCell></MyTableCell>
+                                    {data.map((obj) => (
+                                        <MyTableCell align="center">Week {obj.registrationWeek}</MyTableCell>
+                                    ))}
+                                </TableRow>
+                            </MyTableHead>
+                            <TableBody>
+                                {data.map((obj, index) => (
+                                    <TableRow key={index}>
+                                        <MyTableCell align="center" className="date">
+                                            {obj.start} - {obj.end}
+                                        </MyTableCell>
+                                        {obj.weeklyRetention.map((percent: number, index: number) => (
+                                            <MyTableCell className={getClassName(index, percent)} align="center">
+                                                {percent} %
+                                            </MyTableCell>
+                                        ))}
+                                    </TableRow>
+                                ))}
+                            </TableBody>
+                        </Table>
+                    </TableContainer>
+                )}
+            </div>
+
+        </>
+    );
 };
 
-export default RetentionCohort;
+export default Cohort;
